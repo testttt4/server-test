@@ -1,0 +1,20 @@
+language: node_js
+
+node_js:
+    - 12.6.0
+
+sudo: required
+
+before_install:
+    - sudo apt-get update
+    - sudo apt-get -qqy install openssh-client git-core gnupg curl rsync
+
+script:
+    - npm run build
+
+deploy:
+    provider: script
+    skip_cleanup: true
+    script: npm run deploy
+    on:
+        all_branches: true
