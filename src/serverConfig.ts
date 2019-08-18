@@ -20,15 +20,15 @@ if (!env.PORT) throw new Error("PORT variable not defined");
 const PORT = Number(env.PORT);
 if (!PORT) throw new Error("Invalid PORT value. Must be number");
 
-if (!WRITE_DB_HOST) throw new Error("DB_HOST variable not defined");
+if (!WRITE_DB_HOST) throw new Error("WRITE_DB_HOST variable not defined");
 
-if (!env.DB_PORT) throw new Error("DB_PORT variable not defined");
-const WRITE_DB_PORT = Number(env.DB_PORT);
-if (!WRITE_DB_PORT) throw new Error("Invalid DB_PORT value. Must be number");
+if (!env.WRITE_DB_PORT) throw new Error("WRITE_DB_PORT variable not defined");
+const WRITE_DB_PORT = Number(env.WRITE_DB_PORT);
+if (!WRITE_DB_PORT) throw new Error("Invalid WRITE_DB_PORT value. Must be number");
 
-if (!WRITE_DB_NAME) throw new Error("DB_NAME variable not defined");
-if (!WRITE_DB_USERNAME) throw new Error("DB_USERNAME variable not defined");
-if (!WRITE_DB_PASSWORD) throw new Error("DB_PASSWORD variable not defined");
+if (!WRITE_DB_NAME) throw new Error("WRITE_DB_NAME variable not defined");
+if (!WRITE_DB_USERNAME) throw new Error("WRITE_DB_USERNAME variable not defined");
+if (!WRITE_DB_PASSWORD) throw new Error("WRITE_DB_PASSWORD variable not defined");
 
 const ASSETS_PATH = path.join(FILES_PATH, "assets");
 const ASSETS_URL = urlJoin(FILES_URL, "assets");
