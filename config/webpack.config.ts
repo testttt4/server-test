@@ -44,18 +44,20 @@ export const webpackConfigFactory = (env: "development" | "production" | "none")
 
 	const minimizer = [];
 
-	if (isProd)
-		minimizer.push(
-			new TerserPlugin({
-				sourceMap: true,
-				extractComments: "all",
-				terserOptions: {
-					compress: {
-						drop_console: false,
-					},
-				},
-			})
-		);
+	// if (isProd)
+	// 	minimizer.push(
+	// 		new TerserPlugin({
+	// 			sourceMap: true,
+	// 			extractComments: "all",
+	// 			terserOptions: {
+	// 				compress: {
+	// 					drop_console: false,
+	// 					keep_fnames: true,
+	// 					keep_classnames: true,
+	// 				},
+	// 			},
+	// 		})
+	// 	);
 
 	const plugins = [
 		new webpack.NoEmitOnErrorsPlugin(),

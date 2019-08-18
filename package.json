@@ -3,7 +3,7 @@
 	"description": "OpenFING Server",
 	"scripts": {
 		"start": "ts-node --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/start.ts",
-		"build": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' scripts/build.ts",
+		"build": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/build.ts",
 		"run": "node dist",
 		"build-and-run": "npm run build && npm run run",
 		"ts-check": "tsc --noEmit",
