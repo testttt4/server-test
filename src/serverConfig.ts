@@ -3,7 +3,7 @@ import * as path from "path";
 import urlJoin from "url-join";
 
 const { env } = process;
-const { FILES_URL, JWT_DURATION, JWT_SECRET, DB_HOST, DB_NAME, DB_USERNAME, DB_PASSWORD } = env;
+const { FILES_URL, JWT_DURATION, JWT_SECRET, WRITE_DB_HOST, WRITE_DB_NAME, WRITE_DB_USERNAME, WRITE_DB_PASSWORD } = env;
 
 if (!env.FILES_PATH) throw new Error("FILES_PATH not defined");
 const FILES_PATH = path.join(...env.FILES_PATH.split("/"));
@@ -20,15 +20,15 @@ if (!env.PORT) throw new Error("PORT variable not defined");
 const PORT = Number(env.PORT);
 if (!PORT) throw new Error("Invalid PORT value. Must be number");
 
-if (!DB_HOST) throw new Error("DB_HOST variable not defined");
+if (!WRITE_DB_HOST) throw new Error("DB_HOST variable not defined");
 
 if (!env.DB_PORT) throw new Error("DB_PORT variable not defined");
-const DB_PORT = Number(env.DB_PORT);
-if (!DB_PORT) throw new Error("Invalid DB_PORT value. Must be number");
+const WRITE_DB_PORT = Number(env.DB_PORT);
+if (!WRITE_DB_PORT) throw new Error("Invalid DB_PORT value. Must be number");
 
-if (!DB_NAME) throw new Error("DB_NAME variable not defined");
-if (!DB_USERNAME) throw new Error("DB_USERNAME variable not defined");
-if (!DB_PASSWORD) throw new Error("DB_PASSWORD variable not defined");
+if (!WRITE_DB_NAME) throw new Error("DB_NAME variable not defined");
+if (!WRITE_DB_USERNAME) throw new Error("DB_USERNAME variable not defined");
+if (!WRITE_DB_PASSWORD) throw new Error("DB_PASSWORD variable not defined");
 
 const ASSETS_PATH = path.join(FILES_PATH, "assets");
 const ASSETS_URL = urlJoin(FILES_URL, "assets");
@@ -55,11 +55,11 @@ export const serverConfig = {
 	HOST,
 	PORT,
 
-	DB_HOST,
-	DB_PORT,
-	DB_NAME,
-	DB_USERNAME,
-	DB_PASSWORD,
+	DB_HOST: WRITE_DB_HOST,
+	DB_PORT: WRITE_DB_PORT,
+	DB_NAME: WRITE_DB_NAME,
+	DB_USERNAME: WRITE_DB_USERNAME,
+	DB_PASSWORD: WRITE_DB_PASSWORD,
 
 	LOGGER_PATH: path.resolve(__dirname, "logs"),
 };

@@ -70,7 +70,7 @@ export const webpackConfigFactory = (env: "development" | "production" | "none")
 		mode: env,
 		entry: {
 			index: path.resolve(projectPath, "src", "index.ts"),
-			[path.join("scripts", "populateDB")]: path.resolve(projectPath, "src", "scripts", "populateDB.ts"),
+			[path.join("scripts", "populateDB")]: path.resolve(projectPath, "src", "scripts", "populateDB"),
 		},
 		output: {
 			path: outputPath,
