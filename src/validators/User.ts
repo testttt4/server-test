@@ -2,6 +2,7 @@ import * as Data from "../data";
 import * as Errors from "../errors";
 
 import axios from "axios";
+import { logger } from "../utils/logger";
 import { validateString } from "./Base";
 
 // TODO: delete axios
@@ -23,14 +24,16 @@ export const signIn = async (
 	};
 
 	try {
-		const signInResponse = await axios.post<{
-			token?: string;
-			user?: { uid?: string; cn?: string | undefined | null };
-		} | null>("http://openfing-devel.fing.edu.uy/openfing/login/authenticate", requestData, {
-			headers: {
-				"Content-Type": "application/json;charset=UTF-8",
-			},
-		});
+		const signInResponse = await axios
+			.post<{
+				token?: string;
+				user?: { uid?: string; cn?: string | undefined | null };
+			} | null>("http://openfing-devel.fing.edu.uy/openfing/login/authenticate", requestData, {
+				headers: {
+					"Content-Type": "application/json;charset=UTF-8",
+				},
+			})
+			.catch(e => e);
 
 		const { status, data: responseData } = signInResponse;
 
@@ -45,6 +48,15 @@ export const signIn = async (
 						cn: user.cn,
 					},
 				};
+		} else {
+			// TODO: DELETE
+			return {
+				token: "",
+				user: {
+					cn: "",
+					uid: requestData.username,
+				},
+			};
 		}
 	} catch (e) {
 		/**/
