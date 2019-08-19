@@ -5,10 +5,13 @@ import "regenerator-runtime/runtime";
 import * as Models from "../../models";
 
 import { Model, Sequelize } from "sequelize-typescript";
+import { Pool, PoolClient } from "pg";
 
 import { QueryTypes } from "sequelize";
 import axios from "axios";
+import { from as copyFrom } from "pg-copy-streams";
 import { courseIconUrlByCode } from "./courseIconUrlByCode";
+import csvStringify from "csv-stringify";
 import fs from "fs";
 import moment from "moment";
 import path from "path";
@@ -83,6 +86,7 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 			schema,
 			freezeTableName: true,
 		},
+		logging: false,
 	});
 
 	await writeDB.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
@@ -313,11 +317,10 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 		})
 	);
 
-	const toCSV = (value: unknown): string => {
-		if ([undefined, null].includes(value)) return "\\N";
-		if (typeof value === "string") return value.replace("\n", "\\n");
-		if (typeof value === "number") return value.toString();
-		if (typeof value === "boolean") return value ? "t" : "f";
+	const toCSV = (value: unknown): any => {
+		if ([undefined, null].includes(value)) return "";
+		if (["string", "number", "boolean"].includes(typeof value)) return value;
+		// if (typeof value === "boolean") return value ? "t" : "f";
 		if (value instanceof Date) {
 			const date = moment(value);
 
@@ -423,23 +426,87 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 			const { entities } = toCreate.entityToCreate;
 			if (entities.length === 0) return;
 
-			const queryRowData: string[] = (entities as any[]).map<string>(e => {
-				return valuesFrom(e, toCreate.keys)
-					.map(toCSV)
-					.join("\t");
+			const stringify = async (p: any[][]) => {
+				p = p.map(i => i.map(value => toCSV(value)));
+
+				const result = await new Promise(resolve =>
+					csvStringify(p, (err, output) => {
+						resolve(output);
+					})
+				);
+
+				return result;
+			};
+
+			const filePath = path.join(__dirname, `__${i}`);
+			fs.writeFileSync(filePath, await stringify(entities.map(e => valuesFrom(e, toCreate.keys))));
+			var fileStream = fs.createReadStream(filePath);
+
+			const pool = new Pool({
+				database: WRITE_DB_NAME,
+				password: WRITE_DB_PASSWORD,
+				port: WRITE_DB_PORT,
+				user: WRITE_DB_USERNAME,
+				host: WRITE_DB_HOST,
 			});
 
-			const filePath = path.join(__dirname, `__${i}.sql`);
-			fs.writeFileSync(filePath, queryRowData.join("\n"));
+			pool.connect(async (err, client, done) => {
+				const stream = client.query(
+					copyFrom(
+						`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
+							(k: string) => `"${k}"`
+						)}) FROM STDIN WITH CSV;`
+					)
+				);
 
-			await writeDB.query(
-				`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
-					(k: string) => `"${k}"`
-				)}) FROM '${filePath}';`
-			);
+				if (err) throw err;
+				await new Promise((resolve, reject) => {
+					fileStream.on("error", e => {
+						done();
+						reject(e);
+					});
+					stream.on("error", e => {
+						done();
+						reject(e);
+					});
+					stream.on("end", () => {
+						done();
+						resolve();
+					});
+					fileStream.pipe(stream);
+				});
+			});
+
+			// fileContent +=
+			// 	`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
+			// 		(k: string) => `"${k}"`
+			// 	)}) FROM STDIN WITH CSV;\n` +
+			// 	queryRowData +
+			// 	"\\.\n\n";
+
+			// for (const line of [
+			// 	`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
+			// 		(k: string) => `"${k}"`
+			// 	)}) FROM STDIN WITH CSV;`,
+			// 	...queryRowData.split("\n"),
+			// ]) {
+			// 	writeDB.query(line);
+			// }
+
+			// await writeDB.query(
+			// 	`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
+			// 		(k: string) => `"${k}"`
+			// 	)}) FROM STDIN;\n` +
+			// 		queryRowData.join("\n") +
+			// 		"\n\\.\n\n"
+			// );
 			fs.unlinkSync(filePath);
 		})
 	);
+
+	// fs.writeFileSync(filePath, fileContent);
+
+	// await writeDB.query(fileContent, { raw: true, type: QueryTypes.RAW });
 
 	console.log("- done");
 })();
