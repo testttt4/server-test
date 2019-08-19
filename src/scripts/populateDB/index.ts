@@ -450,30 +450,35 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 				host: WRITE_DB_HOST,
 			});
 
-			pool.connect(async (err, client, done) => {
-				const stream = client.query(
-					copyFrom(
-						`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
-							(k: string) => `"${k}"`
-						)}) FROM STDIN WITH CSV;`
-					)
-				);
+			await new Promise((resolve, reject) => {
+				pool.connect(async (err, client, done) => {
+					const stream = client.query(
+						copyFrom(
+							`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
+								(k: string) => `"${k}"`
+							)}) FROM STDIN WITH CSV;`
+						)
+					);
 
-				if (err) throw err;
-				await new Promise((resolve, reject) => {
-					fileStream.on("error", e => {
-						done();
-						reject(e);
-					});
-					stream.on("error", e => {
-						done();
-						reject(e);
-					});
-					stream.on("end", () => {
-						done();
-						resolve();
-					});
-					fileStream.pipe(stream);
+					if (err) throw err;
+
+					await new Promise((resolve, reject) => {
+						fileStream.on("error", e => {
+							done();
+							reject(e);
+						});
+						stream.on("error", e => {
+							done();
+							reject(e);
+						});
+						stream.on("end", () => {
+							done();
+							resolve();
+						});
+						fileStream.pipe(stream);
+					})
+						.then(resolve)
+						.catch(reject);
 				});
 			});
 
