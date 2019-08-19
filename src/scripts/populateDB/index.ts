@@ -5,8 +5,8 @@ import "regenerator-runtime/runtime";
 import * as Models from "../../models";
 
 import { Model, Sequelize } from "sequelize-typescript";
-import { Pool, PoolClient } from "pg";
 
+import { Pool } from "pg";
 import { QueryTypes } from "sequelize";
 import axios from "axios";
 import { from as copyFrom } from "pg-copy-streams";
@@ -140,7 +140,7 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 		updated_at: string | undefined | null;
 	};
 
-	const adminUserRole = new Models.UserRole();
+	let adminUserRole = new Models.UserRole();
 	adminUserRole.name = Models.UserRoleName.Admin;
 	await adminUserRole.save();
 
@@ -153,6 +153,14 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 	user.uid = "santiago.gonzalez.pereyra";
 	user.name = "Santiago González";
 	await user.save();
+
+	await (async () => {
+		const userUserRole = new Models.UserUserRole();
+		userUserRole.userId = user.id;
+		userUserRole.userRoleId = adminUserRole.id;
+
+		await userUserRole.save();
+	})();
 
 	/////////////////////////////////////////////////
 
