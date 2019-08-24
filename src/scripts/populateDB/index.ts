@@ -10,7 +10,6 @@ import axios, { AxiosError } from "axios";
 import { Pool } from "pg";
 import { QueryTypes } from "sequelize";
 import { from as copyFrom } from "pg-copy-streams";
-import { courseIconUrlByCode } from "./courseIconUrlByCode";
 import csvStringify from "csv-stringify";
 import fs from "fs";
 import https from "https";
@@ -71,8 +70,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 	const isAxiosError = (response: any): response is AxiosError => "isAxiosError" in response && response.isAxiosError;
 	const iconUrl = `https://open.fing.edu.uy/Images/iconCourse/${readCourse.code}_image.svg`;
 
-	if (isAxiosError(await axios.head(iconUrl).catch(e => e)))
-		return urljoin(serverConfig.COURSE_ICONS_URL, "default-icon.svg");
+	if (isAxiosError(await axios.head(iconUrl).catch(e => e))) return serverConfig.DEFAULT_COURSE_ICON_URL;
 
 	const iconUrlSplit = iconUrl.split(".");
 	const iconFileExtension = iconUrlSplit[iconUrlSplit.length - 1];
@@ -84,7 +82,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 		https.get(iconUrl, response => response.pipe(writeStream));
 	});
 
-	return path.join(serverConfig.COURSE_ICONS_URL, `${readCourse.code}.${iconFileExtension}`);
+	return urljoin(serverConfig.COURSE_ICONS_URL, `${readCourse.code}.${iconFileExtension}`);
 };
 
 (async () => {

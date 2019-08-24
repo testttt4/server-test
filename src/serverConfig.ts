@@ -33,8 +33,10 @@ if (!WRITE_DB_PASSWORD) throw new Error("WRITE_DB_PASSWORD variable not defined"
 const ASSETS_PATH = path.join(FILES_PATH, "assets");
 const ASSETS_URL = urlJoin(FILES_URL, "assets");
 
-const COURSE_ICONS_PATH = path.join(ASSETS_PATH, "course_icons");
-const COURSE_ICONS_URL = urlJoin(ASSETS_URL, "course_icons");
+const COURSE_ICONS_PATH = path.join(ASSETS_PATH, "course-icons");
+const COURSE_ICONS_URL = urlJoin(ASSETS_URL, "course-icons");
+
+console.log(COURSE_ICONS_URL);
 
 export const serverConfig = {
 	FILES_PATH,
