@@ -3,7 +3,6 @@
 	"description": "OpenFING Server",
 	"scripts": {
 		"start": "ts-node --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/start.ts",
-		"generateIconUrlsSource": "ts-node --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/generateIconUrlsSource.ts",
 		"scratch": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/scratch.ts",
 		"build": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/build.ts",
 		"run": "node dist",

@@ -5,10 +5,10 @@ import "regenerator-runtime/runtime";
 import * as Models from "../../models";
 
 import { Model, Sequelize } from "sequelize-typescript";
+import axios, { AxiosError } from "axios";
 
 import { Pool } from "pg";
 import { QueryTypes } from "sequelize";
-import axios from "axios";
 import { from as copyFrom } from "pg-copy-streams";
 import { courseIconUrlByCode } from "./courseIconUrlByCode";
 import csvStringify from "csv-stringify";
@@ -18,6 +18,7 @@ import moment from "moment";
 import path from "path";
 import { readVideosQualities } from "./readVideosQualities";
 import { serverConfig } from "../../serverConfig";
+import urljoin from "url-join";
 
 // #region envs
 const { env } = process;
@@ -55,12 +56,35 @@ const { WRITE_DB_HOST } = env;
 if (!WRITE_DB_HOST) throw new Error("WRITE_DB_HOST not defined");
 // #endregion
 
-const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
-	let result: Partial<T> = {};
+type ReadCourse = {
+	id: number;
+	code: string | undefined | null;
+	name: string | undefined | null;
+	url: string | undefined | null;
+	semester: number | undefined | null;
+	year: number | undefined | null;
+	created_at: string | undefined | null;
+	updated_at: string | undefined | null;
+};
 
-	keys.forEach(k => (result[k] = object[k]));
+const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
+	const isAxiosError = (response: any): response is AxiosError => "isAxiosError" in response && response.isAxiosError;
+	const iconUrl = `https://open.fing.edu.uy/Images/iconCourse/${readCourse.code}_image.svg`;
 
-	return result;
+	if (isAxiosError(await axios.head(iconUrl).catch(e => e)))
+		return urljoin(serverConfig.COURSE_ICONS_URL, "default-icon.svg");
+
+	const iconUrlSplit = iconUrl.split(".");
+	const iconFileExtension = iconUrlSplit[iconUrlSplit.length - 1];
+	const newIconPath = path.join(serverConfig.COURSE_ICONS_PATH, `${readCourse.code}.${iconFileExtension}`);
+
+	await new Promise(resolve => {
+		const writeStream = fs.createWriteStream(newIconPath);
+		writeStream.on("close", resolve);
+		https.get(iconUrl, response => response.pipe(writeStream));
+	});
+
+	return path.join(serverConfig.COURSE_ICONS_URL, `${readCourse.code}.${iconFileExtension}`);
 };
 
 (async () => {
@@ -108,16 +132,6 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 	]);
 	await writeDB.sync();
 
-	type ReadCourse = {
-		id: number;
-		code: string | undefined | null;
-		name: string | undefined | null;
-		url: string | undefined | null;
-		semester: number | undefined | null;
-		year: number | undefined | null;
-		created_at: string | undefined | null;
-		updated_at: string | undefined | null;
-	};
 	const readCourses = await readDB.query<ReadCourse>("select * from courses", { type: QueryTypes.SELECT });
 	const coursesJSON: Array<{ code: string; name: string; eva: string | undefined | null }> = (await axios.get(
 		"https://open.fing.edu.uy/data/courses.json"
@@ -538,4 +552,5 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 	// await writeDB.query(fileContent, { raw: true, type: QueryTypes.RAW });
 
 	console.log("- done");
+	process.exit(0);
 })();
