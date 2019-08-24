@@ -197,40 +197,6 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 	const videoQualitiesToCreate = new EntityToCreate<Models.VideoQuality>();
 	const videoFormatsToCreate = new EntityToCreate<Models.VideoFormat>();
 
-	const getCourseIconUrlByCode = await (async () => {
-		// const filePath = path.join(__dirname, "..", "..", "courseIconUrlByCode.json");
-
-		// let data: Record<string, string> = {};
-		// if (!fs.existsSync(filePath)) {
-		// 	await Promise.all(
-		// 		readCourses.map(async readCourse => {
-		// 			let iconURL:
-		// 				| string
-		// 				| undefined = `https://open.fing.edu.uy/Images/iconCourse/${readCourse.code}_image`;
-
-		// 			let iconResponse = await axios.head(`${iconURL}.svg`).catch(e => e);
-
-		// 			if (iconResponse.status === 404) {
-		// 				iconResponse = await axios.head(`${iconURL}.png`).catch(e => e);
-
-		// 				if (iconResponse.status === 404)
-		// 					iconURL = "https://open.fing.edu.uy/_files/assets/course_icons/default-icon.svg";
-		// 				else iconURL += ".png";
-		// 			} else iconURL += ".svg";
-
-		// 			data[readCourse.code] = iconURL;
-		// 		})
-		// 	);
-
-		// 	fs.writeFileSync(filePath, JSON.stringify(data));
-		// } else data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-
-		return (code: string) => {
-			if (!courseIconUrlByCode[code]) throw new Error(`${code} icon not found.`);
-			return courseIconUrlByCode[code];
-		};
-	})();
-
 	if (!fs.existsSync(serverConfig.COURSE_ICONS_PATH))
 		fs.mkdirSync(serverConfig.COURSE_ICONS_PATH, { recursive: true });
 
@@ -243,18 +209,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 			course.disabled = !coursesJSON.find(c => c.code === readCourse.code);
 			course.code = readCourse.code;
 
-			course.iconURL = await new Promise<string>(async resolve => {
-				const iconData = getCourseIconUrlByCode(readCourse.code);
-
-				if (iconData.newPath)
-					await new Promise(resolve => {
-						const writeStream = fs.createWriteStream(iconData.newPath);
-						writeStream.on("close", resolve);
-						https.get(iconData.prevUrl, response => response.pipe(writeStream));
-					});
-
-				resolve(iconData.newUrl);
-			});
+			course.iconURL = await getNewCourseIconUrl(readCourse);
 			course.eva = readCourse.url || null;
 			course.semester = readCourse.semester;
 			course.year = readCourse.year;
