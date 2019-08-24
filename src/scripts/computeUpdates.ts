@@ -33,6 +33,8 @@ if (!READ_DB_HOST) throw new Error("READ_DB_HOST not defined");
 		},
 	});
 
+	console.log("Generando actualizaciones...");
+
 	const updates: Array<{ code: string; name: string; number: string; title: string }> = (await readDB.query<{
 		text: string;
 		number: number | string;
@@ -50,7 +52,7 @@ if (!READ_DB_HOST) throw new Error("READ_DB_HOST not defined");
 		title: u.text,
 	}));
 
-	console.log(JSON.stringify({ updates }));
-
 	fs.writeFileSync("/home/openfing/openfing/data/Updates.json", JSON.stringify({ updates }));
+
+	console.log("Actualizaciones generadas.");
 })();
