@@ -31,9 +31,8 @@ if (!READ_DB_HOST) throw new Error("READ_DB_HOST not defined");
 		define: {
 			freezeTableName: true,
 		},
+		logging: false,
 	});
-
-	console.log("Generando actualizaciones...");
 
 	const updates: Array<{ code: string; name: string; number: string; title: string }> = (await readDB.query<{
 		text: string;
@@ -53,6 +52,7 @@ if (!READ_DB_HOST) throw new Error("READ_DB_HOST not defined");
 	}));
 
 	fs.writeFileSync("/home/openfing/openfing/data/Updates.json", JSON.stringify({ updates }));
-
 	console.log("Actualizaciones generadas.");
+
+	process.exit(0);
 })();
