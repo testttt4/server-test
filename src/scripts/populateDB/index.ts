@@ -13,9 +13,11 @@ import { from as copyFrom } from "pg-copy-streams";
 import { courseIconUrlByCode } from "./courseIconUrlByCode";
 import csvStringify from "csv-stringify";
 import fs from "fs";
+import https from "https";
 import moment from "moment";
 import path from "path";
 import { readVideosQualities } from "./readVideosQualities";
+import { serverConfig } from "../../serverConfig";
 
 // #region envs
 const { env } = process;
@@ -215,6 +217,9 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 		};
 	})();
 
+	if (!fs.existsSync(serverConfig.COURSE_ICONS_PATH))
+		fs.mkdirSync(serverConfig.COURSE_ICONS_PATH, { recursive: true });
+
 	await Promise.all(
 		readCourses.map(async readCourse => {
 			await new Promise(resolve => setTimeout(resolve));
@@ -224,7 +229,18 @@ const pick = <T>(object: T, keys: Array<keyof T>): Partial<T> => {
 			course.disabled = !coursesJSON.find(c => c.code === readCourse.code);
 			course.code = readCourse.code;
 
-			course.iconURL = getCourseIconUrlByCode(readCourse.code);
+			course.iconURL = await new Promise<string>(async resolve => {
+				const iconData = getCourseIconUrlByCode(readCourse.code);
+
+				if (iconData.newPath)
+					await new Promise(resolve => {
+						const writeStream = fs.createWriteStream(iconData.newPath);
+						writeStream.on("close", resolve);
+						https.get(iconData.prevUrl, response => response.pipe(writeStream));
+					});
+
+				resolve(iconData.newUrl);
+			});
 			course.eva = readCourse.url || null;
 			course.semester = readCourse.semester;
 			course.year = readCourse.year;

@@ -6,9 +6,9 @@ const { env } = process;
 const { FILES_URL, JWT_DURATION, JWT_SECRET, WRITE_DB_HOST, WRITE_DB_NAME, WRITE_DB_USERNAME, WRITE_DB_PASSWORD } = env;
 
 if (!env.FILES_PATH) throw new Error("FILES_PATH not defined");
-const FILES_PATH = path.join(...env.FILES_PATH.split("/"));
+const FILES_PATH = path.join("/", ...env.FILES_PATH.split("/"));
 
-if (!FILES_URL) throw new Error("ASSETS_URL not defined");
+if (!FILES_URL) throw new Error("FILES_URL not defined");
 
 if (!JWT_SECRET) throw new Error("JWT_SECRET variable not defined");
 if (!JWT_DURATION) throw new Error("JWT_DURATION variable not defined");

@@ -14,7 +14,7 @@ export const loadEnv = () => {
 
 	if (!fs.existsSync(envFilePath)) return console.log(`${ENV_FILE} file not found. Skiping loadEnv.`);
 
-	const envFileData = fs.readFileSync(envFilePath);
+	const envFileData = fs.readFileSync(envFilePath, "utf8");
 
 	const envs = parse(envFileData);
 

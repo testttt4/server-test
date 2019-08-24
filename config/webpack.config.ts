@@ -122,5 +122,6 @@ export const webpackConfigFactory = (env: "development" | "production" | "none")
 		stats: {
 			warningsFilter: /export .* was not found in/,
 		},
+		devtool: "source-map",
 	};
 };
