@@ -55,9 +55,7 @@ export const getData = async (): Promise<CacheType> => {
 	const result = await new Promise<CacheType>(async resolve => {
 		const notDeletedNorDisabledCondition = { [Op.and]: [getNotDeletedCondition(), notDisabledCondition] };
 
-		const courses = ((await Models.Course.findAll({
-			where: notDeletedNorDisabledCondition,
-		})) as Models.Course[]).sort((c1, c2) =>
+		const courses = ((await Models.Course.findAll()) as Models.Course[]).sort((c1, c2) =>
 			c1.name && c2.name ? c1.name.localeCompare(c2.name) : c1.name === undefined ? -1 : 1
 		);
 		const publicCourses = courses.filter(c => c.status === Models.CourseStatus.Public);
