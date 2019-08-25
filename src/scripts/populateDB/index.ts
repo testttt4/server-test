@@ -237,11 +237,13 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 
 					const courseClass = new Models.CourseClass();
 
+					const createdAt = moment(courseReadVideoQualities.readVideo.created_at).toDate();
+
 					courseClass.courseClassListId = courseClassList.id;
 					courseClass.number = courseReadVideoQualities.readVideo.number;
 					courseClass.disabled = courseReadVideoQualities.readVideo.disabled || null;
 					courseClass.title = courseClassTitle;
-					courseClass.createdAt = moment().toDate();
+					courseClass.createdAt = createdAt;
 					courseClass.createdBy = user.id;
 
 					courseClassesToCreate.add(courseClass);
@@ -251,7 +253,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 					video.courseClassId = courseClass.id;
 					video.position = 1;
 					video.name = "Clase";
-					video.createdAt = moment().toDate();
+					video.createdAt = createdAt;
 					video.createdBy = user.id;
 
 					videosToCreate.add(video);
@@ -262,7 +264,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 						videoQuality.videoId = video.id;
 						videoQuality.width = readVideoQuality.width;
 						videoQuality.height = readVideoQuality.height;
-						videoQuality.createdAt = moment().toDate();
+						videoQuality.createdAt = createdAt;
 						videoQuality.createdBy = user.id;
 
 						videoQualitiesToCreate.add(videoQuality);
@@ -273,7 +275,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 							videoFormat.videoQualityId = videoQuality.id;
 							videoFormat.name = readVideoFormat.name;
 							videoFormat.url = readVideoFormat.url;
-							videoFormat.createdAt = moment().toDate();
+							videoFormat.createdAt = createdAt;
 							videoFormat.createdBy = user.id;
 
 							videoFormatsToCreate.add(videoFormat);
