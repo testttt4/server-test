@@ -4,7 +4,20 @@ import * as Models from "../models";
 import * as Mutations from "../mutations";
 import * as Schemas from "../schemas";
 
-import { Arg, Ctx, Field, FieldResolver, Info, InputType, Int, Mutation, Query, Resolver, Root } from "type-graphql";
+import {
+	Arg,
+	Ctx,
+	Field,
+	FieldResolver,
+	Info,
+	InputType,
+	Int,
+	Mutation,
+	Query,
+	Resolver,
+	Root,
+	registerEnumType,
+} from "type-graphql";
 import { GraphQLBoolean, GraphQLResolveInfo } from "graphql";
 import { Authenticated } from "../middlewares";
 import { Context } from "../Context";
@@ -12,6 +25,14 @@ import { FileUpload } from "graphql-upload";
 import { GraphQLUpload } from "apollo-server-core";
 import { Nullable } from "../typings/helperTypes";
 import { UserRoleName } from "./User";
+
+export enum CourseStatus {
+	Admin = "admin",
+	User = "user",
+}
+registerEnumType(UserRoleName, {
+	name: "UserRoleName",
+});
 
 @InputType()
 export class CreateCourseInput {
@@ -21,8 +42,8 @@ export class CreateCourseInput {
 	@Field(() => String)
 	public name: string;
 
-	@Field(() => Boolean)
-	public disabled: boolean;
+	@Field(() => CourseStatus, { nullable: true })
+	public state: Nullable<CourseStatus>;
 
 	@Field(() => String, { nullable: true })
 	public eva?: Nullable<string>;
@@ -45,8 +66,8 @@ export class UpdateCourseInput {
 	@Field(() => String, { nullable: true })
 	public name?: Nullable<string>;
 
-	@Field(() => Boolean, { nullable: true })
-	public disabled: Nullable<boolean>;
+	@Field(() => CourseStatus, { nullable: true })
+	public state: Nullable<CourseStatus>;
 
 	@Field(() => String, { nullable: true })
 	public eva?: Nullable<string>;

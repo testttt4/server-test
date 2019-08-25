@@ -2,7 +2,6 @@ import * as Data from "../data";
 import * as Errors from "../errors";
 
 import axios from "axios";
-import { logger } from "../utils/logger";
 import { validateString } from "./Base";
 
 // TODO: delete axios

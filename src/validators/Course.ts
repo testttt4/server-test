@@ -71,7 +71,7 @@ export const validateIconURL = (iconURL: string): [true, string | null] | [false
 export type CreateData = {
 	code: string;
 	name: string;
-	disabled: boolean;
+	status?: Nullable<Models.CourseStatus>;
 	eva?: Nullable<string>;
 	semester: number;
 	year: number;
@@ -140,7 +140,7 @@ export const validateCreateData = async ({
 		: [
 				true,
 				{
-					disabled: data.disabled,
+					status: data.status,
 					code,
 					name,
 					eva,

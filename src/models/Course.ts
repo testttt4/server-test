@@ -3,6 +3,12 @@ import { AutoIncrement, Column, DataType, ForeignKey, Model, PrimaryKey, Table }
 import { Nullable } from "../typings/helperTypes";
 import { User } from "./User";
 
+export enum CourseStatus {
+	Public = "public",
+	Hidden = "hidden",
+	Disabled = "disabled",
+}
+
 @Table({ modelName: "Course" })
 export class Course extends Model<Course> {
 	@PrimaryKey
@@ -13,8 +19,8 @@ export class Course extends Model<Course> {
 	@Column({ type: DataType.STRING })
 	public name: string;
 
-	@Column(DataType.BOOLEAN)
-	public disabled: boolean;
+	@Column({ type: DataType.STRING })
+	public status: CourseStatus;
 
 	@Column({ type: DataType.STRING })
 	public code: string;

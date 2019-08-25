@@ -5,6 +5,7 @@ import moment from "moment";
 
 export type CacheType = {
 	courses: Models.Course[];
+	publicCourses: Models.Course[];
 	courseById: Map<number, Models.Course>;
 	courseByCode: Map<string, Models.Course>;
 
@@ -59,6 +60,7 @@ export const getData = async (): Promise<CacheType> => {
 		})) as Models.Course[]).sort((c1, c2) =>
 			c1.name && c2.name ? c1.name.localeCompare(c2.name) : c1.name === undefined ? -1 : 1
 		);
+		const publicCourses = courses.filter(c => c.status === Models.CourseStatus.Public);
 		const courseClasses = await Models.CourseClass.findAll({
 			where: notDeletedNorDisabledCondition,
 		});
@@ -205,6 +207,7 @@ export const getData = async (): Promise<CacheType> => {
 
 		resolve({
 			courses,
+			publicCourses,
 			courseById,
 			courseByCode,
 

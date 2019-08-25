@@ -14,11 +14,16 @@ export type CreateFromValidatedDataOptions = {
 	data: Validators.Course.ValidatedCreateData;
 };
 export const createFromValidatedData = async (options: CreateFromValidatedDataOptions): Promise<Models.Course> => {
-	const course = await Models.Course.create({
-		...options.data,
-		createdBy: options.userId,
-		createdAt: moment().toDate(),
-	});
+	const course = new Models.Course();
+
+	course.code = options.data.code;
+	course.name = options.data.name;
+	course.status = options.data.status || "PUBLIC";
+	course.eva = options.data.eva;
+	course.semester = options.data.semester;
+	course.year = options.data.year;
+	course.createdBy = options.userId;
+	course.createdAt = moment().toDate();
 
 	Data.Base.reloadCache();
 

@@ -9,9 +9,9 @@ export type FindAllOptions = {
 	includeDisabled?: boolean;
 };
 export const findAll = async (options: FindAllOptions): Promise<Models.Course[]> => {
-	const { courses } = await getData();
+	const { publicCourses } = await getData();
 
-	if (!options.includeDeleted && !options.includeDisabled) return courses;
+	if (!options.includeDeleted && !options.includeDisabled) return publicCourses;
 
 	let where: WhereOptions = {};
 

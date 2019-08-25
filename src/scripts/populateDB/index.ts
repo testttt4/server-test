@@ -204,7 +204,9 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 			const course = new Models.Course();
 
 			course.name = readCourse.name;
-			course.disabled = !coursesJSON.find(c => c.code === readCourse.code);
+			course.status = !coursesJSON.find(c => c.code === readCourse.code)
+				? Models.CourseStatus.Hidden
+				: Models.CourseStatus.Public;
 			course.code = readCourse.code;
 
 			course.iconURL = await getNewCourseIconUrl(readCourse);
@@ -318,7 +320,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 			getToCreateItem(coursesToCreate, Models.Course, [
 				"id",
 				"name",
-				"disabled",
+				"status",
 				"code",
 				"iconURL",
 				"eva",

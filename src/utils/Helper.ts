@@ -9,6 +9,15 @@ import uuidV4 from "uuid/v4";
 
 export const getUUID = () => uuidV4();
 
+export const pick = <T extends any>(obj: T, keys: Array<keyof T>): Partial<T> =>
+	keys.reduce(
+		(result, key) => {
+			result[key] = obj[key];
+			return result;
+		},
+		{} as any
+	);
+
 export const getFileExtension = (filename: string): string => {
 	return filename.slice((Math.max(0, filename.lastIndexOf(".")) || Infinity) + 1);
 };
