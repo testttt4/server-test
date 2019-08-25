@@ -4,6 +4,7 @@
 	"scripts": {
 		"start": "ts-node --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/start.ts",
 		"scratch": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/scratch.ts",
+		"getReadVideosQualities": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/getReadVideosQualities.ts",
 		"build": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/build.ts",
 		"run": "node dist",
 		"build-and-run": "npm run build && npm run run",

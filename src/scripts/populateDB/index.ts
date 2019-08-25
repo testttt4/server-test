@@ -217,9 +217,6 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 			course.createdBy = user.id;
 
 			coursesToCreate.add(course);
-			// console.log(
-			// 	`- courseClass ${JSON.stringify(pick(course, ["id", "code", "name", "iconURL", "eva"]))} created`
-			// );
 
 			const courseReadVideosQualities = readVideosQualities.filter(
 				readVideoQuality => readVideoQuality.readVideo.course_id === readCourse.id
@@ -231,8 +228,6 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 			courseClassList.createdAt = moment().toDate();
 			courseClassList.createdBy = user.id;
 			courseClassListsToCreate.add(courseClassList);
-
-			// console.log(`- courseClass ${JSON.stringify(pick(courseClassList, ["id", "courseId", "name"]))} created`);
 
 			await Promise.all(
 				courseReadVideosQualities.map(async courseReadVideoQualities => {
@@ -250,11 +245,6 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 					courseClass.createdBy = user.id;
 
 					courseClassesToCreate.add(courseClass);
-					// console.log(
-					// 	`- courseClass ${JSON.stringify(
-					// 		pick(courseClass, ["id", "courseClassListId", "title", "disabled"])
-					// 	)} created`
-					// );
 
 					const video = new Models.Video();
 
@@ -265,8 +255,6 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 					video.createdBy = user.id;
 
 					videosToCreate.add(video);
-
-					// console.log(`- video ${JSON.stringify(pick(video, ["id", "courseClassId", "name"]))} created`);
 
 					for (const readVideoQuality of courseReadVideoQualities.qualities) {
 						const videoQuality = new Models.VideoQuality();
@@ -279,12 +267,6 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 
 						videoQualitiesToCreate.add(videoQuality);
 
-						// console.log(
-						// 	`- videoQuality ${JSON.stringify(
-						// 		pick(videoQuality, ["id", "videoId", "width", "height"])
-						// 	)} created`
-						// );
-
 						for (const readVideoFormat of readVideoQuality.formats) {
 							const videoFormat = new Models.VideoFormat();
 
@@ -295,12 +277,6 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 							videoFormat.createdBy = user.id;
 
 							videoFormatsToCreate.add(videoFormat);
-
-							// console.log(
-							// 	`- videoFormat ${JSON.stringify(
-							// 		pick(videoFormat, ["id", "videoQualityId", "name", "url"])
-							// 	)} created`
-							// );
 						}
 					}
 				})
@@ -311,7 +287,6 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 	const toCSV = (value: unknown): any => {
 		if ([undefined, null].includes(value)) return "";
 		if (["string", "number", "boolean"].includes(typeof value)) return value;
-		// if (typeof value === "boolean") return value ? "t" : "f";
 		if (value instanceof Date) {
 			const date = moment(value);
 
@@ -413,96 +388,85 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 				"deletedAt",
 				"deletedBy",
 			]),
-		].map(async (toCreate, i: number) => {
-			const { entities } = toCreate.entityToCreate;
-			if (entities.length === 0) return;
+		].map(
+			async (
+				toCreate: {
+					entityToCreate: EntityToCreate<
+						| Models.Course
+						| Models.CourseClass
+						| Models.CourseClassList
+						| Models.Video
+						| Models.VideoFormat
+						| Models.VideoQuality
+					>;
+					model: typeof Model;
+					keys: string[];
+				},
+				i: number
+			) => {
+				const { entities } = toCreate.entityToCreate;
+				if (entities.length === 0) return;
 
-			const stringify = async (p: any[][]) => {
-				p = p.map(i => i.map(value => toCSV(value)));
+				const stringify = async (p: any[][]) => {
+					p = p.map(i => i.map(value => toCSV(value)));
 
-				const result = await new Promise(resolve =>
-					csvStringify(p, (err, output) => {
-						resolve(output);
-					})
-				);
-
-				return result;
-			};
-
-			const filePath = path.join(__dirname, `__${i}`);
-			fs.writeFileSync(filePath, await stringify(entities.map(e => valuesFrom(e, toCreate.keys))));
-			var fileStream = fs.createReadStream(filePath);
-
-			const pool = new Pool({
-				database: WRITE_DB_NAME,
-				password: WRITE_DB_PASSWORD,
-				port: WRITE_DB_PORT,
-				user: WRITE_DB_USERNAME,
-				host: WRITE_DB_HOST,
-			});
-
-			await new Promise((resolve, reject) => {
-				pool.connect(async (err, client, done) => {
-					const stream = client.query(
-						copyFrom(
-							`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
-								(k: string) => `"${k}"`
-							)}) FROM STDIN WITH CSV;`
-						)
+					const result = await new Promise(resolve =>
+						csvStringify(p, (err, output) => {
+							resolve(output);
+						})
 					);
 
-					if (err) throw err;
+					return result;
+				};
 
-					await new Promise((resolve, reject) => {
-						fileStream.on("error", e => {
-							done();
-							reject(e);
-						});
-						stream.on("error", e => {
-							done();
-							reject(e);
-						});
-						stream.on("end", () => {
-							done();
-							resolve();
-						});
-						fileStream.pipe(stream);
-					})
-						.then(resolve)
-						.catch(reject);
+				const filePath = path.join(__dirname, `__${i}`);
+				fs.writeFileSync(filePath, await stringify(entities.map(e => valuesFrom(e, toCreate.keys as any[]))));
+				var fileStream = fs.createReadStream(filePath);
+
+				const pool = new Pool({
+					database: WRITE_DB_NAME,
+					password: WRITE_DB_PASSWORD,
+					port: WRITE_DB_PORT,
+					user: WRITE_DB_USERNAME,
+					host: WRITE_DB_HOST,
 				});
-			});
 
-			// fileContent +=
-			// 	`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
-			// 		(k: string) => `"${k}"`
-			// 	)}) FROM STDIN WITH CSV;\n` +
-			// 	queryRowData +
-			// 	"\\.\n\n";
+				await new Promise((resolve, reject) => {
+					pool.connect(async (err, client, done) => {
+						const stream = client.query(
+							copyFrom(
+								`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
+									(k: string) => `"${k}"`
+								)}) FROM STDIN WITH CSV;`
+							)
+						);
 
-			// for (const line of [
-			// 	`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
-			// 		(k: string) => `"${k}"`
-			// 	)}) FROM STDIN WITH CSV;`,
-			// 	...queryRowData.split("\n"),
-			// ]) {
-			// 	writeDB.query(line);
-			// }
+						if (err) throw err;
 
-			// await writeDB.query(
-			// 	`COPY ${(toCreate.model as typeof Model).getTableName()} (${toCreate.keys.map(
-			// 		(k: string) => `"${k}"`
-			// 	)}) FROM STDIN;\n` +
-			// 		queryRowData.join("\n") +
-			// 		"\n\\.\n\n"
-			// );
-			fs.unlinkSync(filePath);
-		})
+						await new Promise((resolve, reject) => {
+							fileStream.on("error", e => {
+								done();
+								reject(e);
+							});
+							stream.on("error", e => {
+								done();
+								reject(e);
+							});
+							stream.on("end", () => {
+								done();
+								resolve();
+							});
+							fileStream.pipe(stream);
+						})
+							.then(resolve)
+							.catch(reject);
+					});
+				});
+
+				fs.unlinkSync(filePath);
+			}
+		)
 	);
-
-	// fs.writeFileSync(filePath, fileContent);
-
-	// await writeDB.query(fileContent, { raw: true, type: QueryTypes.RAW });
 
 	console.log("- done");
 	process.exit(0);
