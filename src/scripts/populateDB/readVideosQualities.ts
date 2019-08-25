@@ -1,19 +1,4 @@
-export const readVideosQualities: Array<{
-	readVideo: {
-		id: number;
-		number: number;
-		disabled: boolean;
-		course_id: number;
-		youtube: null;
-		created_at: string;
-		updated_at: string;
-	};
-	qualities: Array<{
-		height: number;
-		width: number;
-		formats: Array<{ name: string; url: string }>;
-	}>;
-}> = [
+export const readVideosQualities = [
 	{
 		qualities: [
 			{
@@ -44166,6 +44151,434 @@ export const readVideosQualities: Array<{
 			course_id: 43,
 			created_at: "2015-06-24T01:36:49.153Z",
 			updated_at: "2015-06-24T01:36:49.153Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/ayp/ayp_08.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/ayp/ayp_08.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1846,
+			number: 8,
+			youtube: null,
+			disabled: false,
+			course_id: 105,
+			created_at: "2019-08-18T21:35:05.188Z",
+			updated_at: "2019-08-18T21:35:05.188Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/ayp/ayp_10.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/ayp/ayp_10.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1849,
+			number: 10,
+			youtube: null,
+			disabled: false,
+			course_id: 105,
+			created_at: "2019-08-20T10:43:36.292Z",
+			updated_at: "2019-08-20T10:43:36.292Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/ayp/ayp_09.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/ayp/ayp_09.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1848,
+			number: 9,
+			youtube: null,
+			disabled: false,
+			course_id: 105,
+			created_at: "2019-08-20T10:43:14.232Z",
+			updated_at: "2019-08-20T10:43:14.232Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/gal219/gal219_07.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/gal219/gal219_07.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1851,
+			number: 7,
+			youtube: null,
+			disabled: false,
+			course_id: 118,
+			created_at: "2019-08-20T22:39:31.411Z",
+			updated_at: "2019-08-20T22:39:31.411Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/ed19/ed19_05.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/ed19/ed19_05.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1847,
+			number: 5,
+			youtube: null,
+			disabled: false,
+			course_id: 116,
+			created_at: "2019-08-19T12:36:55.849Z",
+			updated_at: "2019-08-19T12:36:55.849Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_03.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_03.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1854,
+			number: 3,
+			youtube: null,
+			disabled: false,
+			course_id: 120,
+			created_at: "2019-08-22T21:59:05.722Z",
+			updated_at: "2019-08-22T21:59:05.722Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_04.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_04.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1855,
+			number: 4,
+			youtube: null,
+			disabled: false,
+			course_id: 120,
+			created_at: "2019-08-22T21:59:09.259Z",
+			updated_at: "2019-08-22T21:59:09.259Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_05.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_05.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1856,
+			number: 5,
+			youtube: null,
+			disabled: false,
+			course_id: 120,
+			created_at: "2019-08-22T21:59:12.172Z",
+			updated_at: "2019-08-22T21:59:12.172Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_01.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_01.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1852,
+			number: 1,
+			youtube: null,
+			disabled: false,
+			course_id: 120,
+			created_at: "2019-08-22T21:58:43.485Z",
+			updated_at: "2019-08-22T21:58:43.485Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_06.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_06.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1857,
+			number: 6,
+			youtube: null,
+			disabled: false,
+			course_id: 120,
+			created_at: "2019-08-22T21:59:15.209Z",
+			updated_at: "2019-08-22T21:59:15.209Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/gal219/gal219_08.webm",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1860,
+			number: 8,
+			youtube: null,
+			disabled: false,
+			course_id: 118,
+			created_at: "2019-08-23T04:52:03.663Z",
+			updated_at: "2019-08-23T04:52:03.663Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/ed19/ed19_07.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/ed19/ed19_07.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1850,
+			number: 7,
+			youtube: null,
+			disabled: false,
+			course_id: 116,
+			created_at: "2019-08-20T22:37:37.345Z",
+			updated_at: "2019-08-20T22:37:37.345Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_07.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_07.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1858,
+			number: 7,
+			youtube: null,
+			disabled: false,
+			course_id: 120,
+			created_at: "2019-08-22T21:59:19.921Z",
+			updated_at: "2019-08-22T21:59:19.921Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/ed19/ed19_08.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/ed19/ed19_08.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1859,
+			number: 8,
+			youtube: null,
+			disabled: false,
+			course_id: 116,
+			created_at: "2019-08-23T03:06:48.014Z",
+			updated_at: "2019-08-23T03:06:48.014Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_02.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/vyo19/vyo19_02.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1853,
+			number: 2,
+			youtube: null,
+			disabled: false,
+			course_id: 120,
+			created_at: "2019-08-22T21:58:58.183Z",
+			updated_at: "2019-08-22T21:58:58.183Z",
+		},
+	},
+	{
+		qualities: [
+			{
+				width: 1920,
+				height: 1080,
+				formats: [
+					{
+						name: "webm",
+						url: "http://openfing-video.fing.edu.uy/media/gal119/gal119_03.webm",
+					},
+					{
+						name: "mp4",
+						url: "http://openfing-video.fing.edu.uy/media/gal119/gal119_03.mp4",
+					},
+				],
+			},
+		],
+		readVideo: {
+			id: 1861,
+			number: 3,
+			youtube: null,
+			disabled: false,
+			course_id: 117,
+			created_at: "2019-08-24T03:58:03.496Z",
+			updated_at: "2019-08-24T03:58:03.496Z",
 		},
 	},
 ];
