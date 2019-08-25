@@ -1,9 +1,6 @@
-import * as Data from "../data";
-import * as Errors from "../errors";
-import * as Models from "../models";
-import * as Mutations from "../mutations";
-import * as Schemas from "../schemas";
-
+import { GraphQLUpload } from "apollo-server-core";
+import { GraphQLBoolean, GraphQLResolveInfo } from "graphql";
+import { FileUpload } from "graphql-upload";
 import {
 	Arg,
 	Ctx,
@@ -18,11 +15,13 @@ import {
 	Root,
 	registerEnumType,
 } from "type-graphql";
-import { GraphQLBoolean, GraphQLResolveInfo } from "graphql";
-import { Authenticated } from "../middlewares";
 import { Context } from "../Context";
-import { FileUpload } from "graphql-upload";
-import { GraphQLUpload } from "apollo-server-core";
+import * as Data from "../data";
+import * as Errors from "../errors";
+import { Authenticated } from "../middlewares";
+import * as Models from "../models";
+import * as Mutations from "../mutations";
+import * as Schemas from "../schemas";
 import { Nullable } from "../typings/helperTypes";
 import { UserRoleName } from "./User";
 
@@ -30,8 +29,8 @@ export enum CourseStatus {
 	Admin = "admin",
 	User = "user",
 }
-registerEnumType(UserRoleName, {
-	name: "UserRoleName",
+registerEnumType(CourseStatus, {
+	name: "CourseStatus",
 });
 
 @InputType()
