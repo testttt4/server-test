@@ -92,6 +92,7 @@
 		"graphql-subscriptions": "1.1.0",
 		"jsonfile": "5.0.0",
 		"jsonwebtoken": "8.5.1",
+		"mobx": "^5.13.0",
 		"moment": "2.24.0",
 		"moment-timezone": "0.5.26",
 		"pg": "7.12.0",

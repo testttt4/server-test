@@ -9,23 +9,25 @@ import {
 	PrimaryKey,
 	Table,
 } from "sequelize-typescript";
-import { CourseClass, CourseEdition, User } from "./internal";
+import { Course, CourseClassList, User } from "./internal";
 
 import { Nullable } from "../typings/helperTypes";
 
-export const CourseClassListStatus: { [K in "public" | "hidden" | "disabled"]: K } = {
+export const CourseEditionStatus: { [K in "public" | "hidden" | "disabled"]: K } = {
 	public: "public",
 	disabled: "disabled",
 	hidden: "hidden",
 };
 
-export const CourseClassListAttributes: {
+export const CourseEditionAttributes: {
 	[K in keyof Required<
 		Pick<
-			CourseClassList,
+			CourseEdition,
 			| "id"
-			| "courseEditionId"
+			| "courseId"
 			| "name"
+			| "semester"
+			| "year"
 			| "status"
 			| "createdAt"
 			| "createdById"
@@ -37,8 +39,10 @@ export const CourseClassListAttributes: {
 	>]: K;
 } = {
 	id: "id",
-	courseEditionId: "courseEditionId",
+	courseId: "courseId",
 	name: "name",
+	semester: "semester",
+	year: "year",
 	status: "status",
 	createdAt: "createdAt",
 	createdById: "createdById",
@@ -48,40 +52,46 @@ export const CourseClassListAttributes: {
 	deletedById: "deletedById",
 };
 
-export const CourseClassListRelations: {
+export const CourseEditionRelations: {
 	[K in keyof Required<
-		Pick<CourseClassList, "courseEdition" | "courseClasses" | "createdBy" | "updatedBy" | "deletedBy">
+		Pick<CourseEdition, "course" | "courseClassLists" | "createdBy" | "updatedBy" | "deletedBy">
 	>]: K;
 } = {
-	courseEdition: "courseEdition",
-	courseClasses: "courseClasses",
+	course: "course",
+	courseClassLists: "courseClassLists",
 	createdBy: "createdBy",
 	updatedBy: "updatedBy",
 	deletedBy: "deletedBy",
 };
 
-@Table({ modelName: "CourseClassList" })
-export class CourseClassList extends Model<CourseClassList> {
+@Table({ modelName: "CourseEdition" })
+export class CourseEdition extends Model<CourseEdition> {
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.SMALLINT)
 	public id: number;
 
-	@ForeignKey(() => CourseEdition)
+	@ForeignKey(() => Course)
 	@Column(DataType.SMALLINT)
-	public courseEditionId: number;
+	public courseId: number;
 
-	@BelongsTo(() => CourseEdition, CourseClassListAttributes.courseEditionId)
-	public courseEdition: CourseEdition;
+	@BelongsTo(() => Course, CourseEditionAttributes.courseId)
+	public course: Course;
 
-	@HasMany(() => CourseClass, "courseClassListId")
-	public courseClasses: CourseClass[];
+	@HasMany(() => CourseClassList, "courseEditionId")
+	public courseClassLists: CourseClassList[];
 
 	@Column({ type: DataType.STRING })
 	public name: string;
 
+	@Column({ type: DataType.INTEGER })
+	public semester: number;
+
+	@Column({ type: DataType.INTEGER })
+	public year: number;
+
 	@Column({ type: DataType.STRING })
-	public status: keyof typeof CourseClassListStatus;
+	public status: keyof typeof CourseEditionStatus;
 
 	@Column(DataType.DATE)
 	public createdAt?: Nullable<Date>;
@@ -90,7 +100,7 @@ export class CourseClassList extends Model<CourseClassList> {
 	@Column(DataType.INTEGER)
 	public createdById: Nullable<number>;
 
-	@BelongsTo(() => User, CourseClassListAttributes.createdById)
+	@BelongsTo(() => User, CourseEditionAttributes.createdById)
 	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
@@ -100,7 +110,7 @@ export class CourseClassList extends Model<CourseClassList> {
 	@Column(DataType.INTEGER)
 	public updatedById: Nullable<number>;
 
-	@BelongsTo(() => User, CourseClassListAttributes.updatedById)
+	@BelongsTo(() => User, CourseEditionAttributes.updatedById)
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
@@ -110,6 +120,6 @@ export class CourseClassList extends Model<CourseClassList> {
 	@Column(DataType.INTEGER)
 	public deletedById: Nullable<number>;
 
-	@BelongsTo(() => User, CourseClassListAttributes.deletedById)
+	@BelongsTo(() => User, CourseEditionAttributes.deletedById)
 	public deletedBy: Nullable<User>;
 }

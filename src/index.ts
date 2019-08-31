@@ -32,6 +32,12 @@ const sequelize = new CustomSequelize({
 	},
 });
 
+setInterval(() => {
+	const used = process.memoryUsage().heapUsed / 1024 / 1024;
+
+	console.log(`${Math.round(used * 100) / 100} MB`);
+}, 5000);
+
 const expressApp = express();
 
 const schema = buildSchemaSync({
@@ -114,6 +120,7 @@ expressApp.listen(
 			Models.Course,
 			Models.CourseClass,
 			Models.CourseClassList,
+			Models.CourseEdition,
 			Models.FAQ,
 			Models.User,
 			Models.UserRole,

@@ -1,27 +1,36 @@
 import * as Models from "../models";
 
-import { getData } from "./Base";
+import { getDataHandler } from "./Base";
 
 export type FindAllByUserId = {
 	userId: number;
 };
-export const findAllByUserId = async ({ userId }: FindAllByUserId): Promise<Models.UserRole[]> => {
-	const { userUserRolesByUserId, userRoleById } = await getData();
-
-	const result: Models.UserRole[] = [];
-
-	(userUserRolesByUserId.get(userId) || [])
-		.map(userUserRole => typeof userUserRole.userRoleId === "number" && userRoleById.get(userUserRole.userRoleId))
-		.forEach(i => i && result.push(i));
-
-	return result;
-};
+export const findAllByUserId = getDataHandler<(options: FindAllByUserId) => Promise<Models.UserRole[]>>({
+	getCacheKey: options => [options.userId].join("."),
+	calculate: async (config, options) => {
+		return Models.UserRole.findAll({
+			include: [
+				{
+					model: Models.User,
+					as: Models.UserRoleRelations.users,
+					where: {
+						[Models.UserAttributes.id]: options.userId,
+					},
+				},
+			],
+		});
+	},
+});
 
 export type FindOneOptions = {
-	name: Models.UserRoleName;
+	name: keyof typeof Models.UserRoleName;
 };
-export const findOne = async ({ name }: FindOneOptions): Promise<Models.UserRole | undefined> => {
-	const { userRoleByName } = await getData();
-
-	return userRoleByName.get(name);
-};
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.UserRole | null>>({
+	getCacheKey: options => [options.name].join("."),
+	calculate: async (config, options) =>
+		Models.UserRole.findOne({
+			where: {
+				[Models.UserRoleAttributes.name]: options.name,
+			},
+		}),
+});

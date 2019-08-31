@@ -1,8 +1,58 @@
-import { AutoIncrement, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from "sequelize-typescript";
+import {
+	AutoIncrement,
+	BelongsTo,
+	Column,
+	DataType,
+	ForeignKey,
+	HasMany,
+	Model,
+	PrimaryKey,
+	Table,
+} from "sequelize-typescript";
+import { CourseClassList, User, Video } from "./internal";
 
-import { CourseClassList } from "./CourseClassList";
 import { Nullable } from "../typings/helperTypes";
-import { User } from "./User";
+
+export const CourseClassAttributes: {
+	[K in keyof Required<
+		Pick<
+			CourseClass,
+			| "id"
+			| "courseClassListId"
+			| "number"
+			| "title"
+			| "disabled"
+			| "createdAt"
+			| "createdById"
+			| "updatedAt"
+			| "updatedById"
+			| "deletedAt"
+			| "deletedById"
+		>
+	>]: K;
+} = {
+	id: "id",
+	courseClassListId: "courseClassListId",
+	number: "number",
+	title: "title",
+	disabled: "disabled",
+	createdAt: "createdAt",
+	createdById: "createdById",
+	updatedAt: "updatedAt",
+	updatedById: "updatedById",
+	deletedAt: "deletedAt",
+	deletedById: "deletedById",
+};
+
+export const CourseClassRelations: {
+	[K in keyof Required<Pick<CourseClass, "courseClassList" | "videos" | "createdBy" | "updatedBy" | "deletedBy">>]: K;
+} = {
+	courseClassList: "courseClassList",
+	videos: "videos",
+	createdBy: "createdBy",
+	updatedBy: "updatedBy",
+	deletedBy: "deletedBy",
+};
 
 @Table({ modelName: "CourseClass" })
 export class CourseClass extends Model<CourseClass> {
@@ -12,8 +62,11 @@ export class CourseClass extends Model<CourseClass> {
 	public id: number;
 
 	@ForeignKey(() => CourseClassList)
-	@Column({ type: DataType.SMALLINT })
+	@Column
 	public courseClassListId: number;
+
+	@BelongsTo(() => CourseClassList, CourseClassAttributes.courseClassListId)
+	public courseClassList: any;
 
 	@Column({ type: DataType.SMALLINT })
 	public number: number;
@@ -24,24 +77,36 @@ export class CourseClass extends Model<CourseClass> {
 	@Column(DataType.BOOLEAN)
 	public disabled: boolean | null;
 
+	@HasMany(() => Video, "courseClassId")
+	public videos: Video[];
+
 	@Column(DataType.DATE)
 	public createdAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
-	public createdBy: number | null;
+	public createdById: Nullable<number>;
+
+	@BelongsTo(() => User, CourseClassAttributes.createdById)
+	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
 	public updatedAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
-	public updatedBy: number | null;
+	public updatedById: Nullable<number>;
+
+	@BelongsTo(() => User, CourseClassAttributes.updatedById)
+	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
 	public deletedAt?: Nullable<Date | string>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
-	public deletedBy: number | null;
+	public deletedById: Nullable<number>;
+
+	@BelongsTo(() => User, CourseClassAttributes.deletedById)
+	public deletedBy: Nullable<User>;
 }

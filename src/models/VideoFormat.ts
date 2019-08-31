@@ -1,8 +1,46 @@
-import { AutoIncrement, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { AutoIncrement, BelongsTo, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from "sequelize-typescript";
 
 import { Nullable } from "../typings/helperTypes";
-import { User } from "./User";
-import { VideoQuality } from "./VideoQuality";
+import { User } from "./internal";
+import { VideoQuality } from "./internal";
+
+export const VideoFormatAttributes: {
+	[K in keyof Required<
+		Pick<
+			VideoFormat,
+			| "id"
+			| "videoQualityId"
+			| "name"
+			| "url"
+			| "createdAt"
+			| "createdById"
+			| "updatedAt"
+			| "updatedById"
+			| "deletedAt"
+			| "deletedById"
+		>
+	>]: K;
+} = {
+	id: "id",
+	videoQualityId: "videoQualityId",
+	name: "name",
+	url: "url",
+	createdAt: "createdAt",
+	createdById: "createdById",
+	updatedAt: "updatedAt",
+	updatedById: "updatedById",
+	deletedAt: "deletedAt",
+	deletedById: "deletedById",
+};
+
+export const VideoFormatRelations: {
+	[K in keyof Required<Pick<VideoFormat, "videoQuality" | "createdBy" | "updatedBy" | "deletedBy">>]: K;
+} = {
+	videoQuality: "videoQuality",
+	createdBy: "createdBy",
+	updatedBy: "updatedBy",
+	deletedBy: "deletedBy",
+};
 
 @Table({ modelName: "VideoFormat" })
 export class VideoFormat extends Model<VideoFormat> {
@@ -15,6 +53,9 @@ export class VideoFormat extends Model<VideoFormat> {
 	@Column({ type: DataType.INTEGER })
 	public videoQualityId?: Nullable<number>;
 
+	@BelongsTo(() => VideoQuality, VideoFormatAttributes.videoQualityId)
+	public videoQuality?: Nullable<VideoQuality>;
+
 	@Column({ type: DataType.STRING })
 	public name?: Nullable<string>;
 
@@ -25,20 +66,29 @@ export class VideoFormat extends Model<VideoFormat> {
 	public createdAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
-	@Column({ type: DataType.INTEGER })
-	public createdBy?: Nullable<number>;
+	@Column(DataType.INTEGER)
+	public createdById: Nullable<number>;
+
+	@BelongsTo(() => User, VideoFormatAttributes.createdById)
+	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
 	public updatedAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
-	@Column({ type: DataType.INTEGER })
-	public updatedBy?: Nullable<number>;
+	@Column(DataType.INTEGER)
+	public updatedById: Nullable<number>;
+
+	@BelongsTo(() => User, VideoFormatAttributes.updatedById)
+	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
 	public deletedAt?: Nullable<Date | string>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
-	public deletedBy?: Nullable<number>;
+	public deletedById: Nullable<number>;
+
+	@BelongsTo(() => User, VideoFormatAttributes.deletedById)
+	public deletedBy: Nullable<User>;
 }

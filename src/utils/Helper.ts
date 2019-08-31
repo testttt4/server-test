@@ -7,6 +7,8 @@ import { serverConfig } from "../serverConfig";
 import urlJoin from "url-join";
 import uuidV4 from "uuid/v4";
 
+export const identity = <T>(value: T): T => value;
+
 export const getUUID = () => uuidV4();
 
 export const pick = <T extends any>(obj: T, keys: Array<keyof T>): Partial<T> =>

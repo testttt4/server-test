@@ -1,11 +1,37 @@
-import { AutoIncrement, Column, DataType, Default, Model, PrimaryKey, Table } from "sequelize-typescript";
+import {
+	AutoIncrement,
+	BelongsToMany,
+	Column,
+	DataType,
+	Default,
+	Model,
+	PrimaryKey,
+	Table,
+} from "sequelize-typescript";
+import { User, UserUserRole } from "./internal";
 
 import { Nullable } from "../typings/helperTypes";
 
-export enum UserRoleName {
-	Admin = "admin",
-	User = "user",
-}
+export const UserRoleName: { [K in "admin" | "user"]: K } = {
+	admin: "admin",
+	user: "user",
+};
+
+export const UserRoleAttributes: {
+	[K in keyof Required<Pick<UserRole, "id" | "name" | "createdAt" | "updatedAt" | "deletedAt">>]: K;
+} = {
+	id: "id",
+	name: "name",
+	createdAt: "createdAt",
+	updatedAt: "updatedAt",
+	deletedAt: "deletedAt",
+};
+
+export const UserRoleRelations: {
+	[K in keyof Required<Pick<UserRole, "users">>]: K;
+} = {
+	users: "users",
+};
 
 @Table({ modelName: "UserRole" })
 export class UserRole extends Model<UserRole> {
@@ -16,7 +42,10 @@ export class UserRole extends Model<UserRole> {
 
 	@Default("user")
 	@Column({ type: DataType.STRING })
-	public name: UserRoleName;
+	public name: keyof typeof UserRoleName;
+
+	@BelongsToMany(() => User, () => UserUserRole)
+	public users: User[];
 
 	@Column(DataType.DATE)
 	public createdAt?: Nullable<Date>;

@@ -1,7 +1,44 @@
-import { AutoIncrement, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { AutoIncrement, BelongsTo, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from "sequelize-typescript";
 
 import { Nullable } from "../typings/helperTypes";
-import { User } from "./User";
+import { User } from "./internal";
+
+export const FAQAttributes: {
+	[K in keyof Required<
+		Pick<
+			FAQ,
+			| "id"
+			| "title"
+			| "content"
+			| "isHTML"
+			| "createdAt"
+			| "createdById"
+			| "updatedAt"
+			| "updatedById"
+			| "deletedAt"
+			| "deletedById"
+		>
+	>]: K;
+} = {
+	id: "id",
+	title: "title",
+	content: "content",
+	isHTML: "isHTML",
+	createdAt: "createdAt",
+	createdById: "createdById",
+	updatedAt: "updatedAt",
+	updatedById: "updatedById",
+	deletedAt: "deletedAt",
+	deletedById: "deletedById",
+};
+
+export const FAQRelations: {
+	[K in keyof Required<Pick<FAQ, "createdBy" | "updatedBy" | "deletedBy">>]: K;
+} = {
+	createdBy: "createdBy",
+	updatedBy: "updatedBy",
+	deletedBy: "deletedBy",
+};
 
 @Table({ modelName: "FAQ" })
 export class FAQ extends Model<FAQ> {
@@ -19,27 +56,33 @@ export class FAQ extends Model<FAQ> {
 	@Column(DataType.BOOLEAN)
 	public isHTML?: Nullable<boolean>;
 
-	@Column({ type: DataType.SMALLINT })
-	public position?: Nullable<number>;
-
 	@Column(DataType.DATE)
 	public createdAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
-	public createdBy?: Nullable<number>;
+	public createdById: Nullable<number>;
+
+	@BelongsTo(() => User, FAQAttributes.createdById)
+	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
 	public updatedAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
-	public updatedBy?: Nullable<number>;
+	public updatedById: Nullable<number>;
+
+	@BelongsTo(() => User, FAQAttributes.updatedById)
+	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
 	public deletedAt?: Nullable<Date | string>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
-	public deletedBy?: Nullable<number>;
+	public deletedById: Nullable<number>;
+
+	@BelongsTo(() => User, FAQAttributes.deletedById)
+	public deletedBy: Nullable<User>;
 }

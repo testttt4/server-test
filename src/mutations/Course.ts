@@ -6,6 +6,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { FileUpload } from "graphql-upload";
+import { identity } from "../utils/Helper";
 import moment from "moment";
 import { serverConfig } from "../serverConfig";
 
@@ -14,16 +15,26 @@ export type CreateFromValidatedDataOptions = {
 	data: Validators.Course.ValidatedCreateData;
 };
 export const createFromValidatedData = async (options: CreateFromValidatedDataOptions): Promise<Models.Course> => {
-	const course = new Models.Course();
+	const course = new Models.Course(
+		identity<Required<Pick<Models.Course, keyof Omit<typeof Models.CourseAttributes, "id">>>>({
+			code: options.data.code,
+			name: options.data.name,
+			visibility: options.data.status || "public",
+			eva: options.data.eva || null,
+			iconURL: options.data.iconUrl,
+			createdById: options.userId,
+			createdAt: moment().toDate(),
+			updatedById: options.userId,
+			updatedAt: moment().toDate(),
+			deletedById: null,
+			deletedAt: null,
+		})
+	);
 
 	course.code = options.data.code;
 	course.name = options.data.name;
-	course.status = options.data.status || "PUBLIC";
-	course.eva = options.data.eva;
 	course.semester = options.data.semester;
 	course.year = options.data.year;
-	course.createdBy = options.userId;
-	course.createdAt = moment().toDate();
 
 	Data.Base.reloadCache();
 

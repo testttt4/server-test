@@ -1,37 +1,72 @@
-import * as CourseClassList from "./CourseClassList";
 import * as Errors from "../errors";
 import * as Models from "../models";
 
-import { getData, getNotDeletedCondition, notDisabledCondition } from "./Base";
-
-import { WhereOptions } from "sequelize";
+import { Op, WhereOptions } from "sequelize";
+import { getDataHandler, getNotDeletedCondition } from "./Base";
 
 export type FindAllOptions = {
 	courseClassListId: number;
 	includeDeleted?: boolean;
 	includeDisabled?: boolean;
 };
-export const findAll = async (options: FindAllOptions): Promise<Models.CourseClass[]> => {
-	const { courseClassesByCourseClassListId } = await getData();
+export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.CourseClass[]>>({
+	getCacheKey: options => `${options.courseClassListId}.${!!options.includeDeleted}.${!!options.includeDisabled}`,
+	calculate: async (config, options) => {
+		const where: WhereOptions = {
+			[Models.CourseClassAttributes.courseClassListId]: options.courseClassListId,
+		};
 
-	await CourseClassList.findOneOrThrow({ id: options.courseClassListId });
+		if (!options.includeDeleted) where[Models.CourseClassAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		else config.ignore();
 
-	if (!options.includeDeleted && !options.includeDisabled)
-		return courseClassesByCourseClassListId.get(options.courseClassListId) || [];
+		if (!options.includeDisabled) where[Models.CourseClassAttributes.disabled] = { [Op.or]: [null, false] };
 
-	let where: WhereOptions = {
-		courseClassListId: options.courseClassListId,
-	};
+		return Models.CourseClass.findAll({ where });
+	},
+});
 
-	if (!options.includeDisabled) where = { ...where, ...notDisabledCondition };
-	if (!options.includeDeleted) where = { ...where, ...getNotDeletedCondition() };
-
-	return Models.CourseClass.findAll({ where });
-};
-
-export const findAllLatest = async (): Promise<Models.CourseClass[]> => {
-	return (await getData()).latestCourseClasses;
-};
+export const findAllLatest = getDataHandler<() => Promise<Models.CourseClass[]>>({
+	getCacheKey: () => `updates`,
+	calculate: async () =>
+		Models.CourseClass.findAll({
+			where: { [Models.CourseClassAttributes.disabled]: { [Op.or]: [null, false] } },
+			order: [[Models.CourseClassAttributes.createdAt, "DESC"]],
+			limit: 20,
+			include: [
+				{
+					model: Models.CourseClassList,
+					as: Models.CourseClassRelations.courseClassList,
+					attributes: [],
+					where: {
+						[Models.CourseClassListAttributes.status]: Models.CourseClassListStatus.public,
+						[Models.CourseClassListAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
+					},
+					include: [
+						{
+							model: Models.CourseEdition,
+							as: Models.CourseClassListRelations.courseEdition,
+							attributes: [],
+							where: {
+								[Models.CourseEditionAttributes.status]: Models.CourseEditionStatus.public,
+								[Models.CourseEditionAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
+							},
+							include: [
+								{
+									model: Models.Course,
+									as: Models.CourseEditionRelations.course,
+									attributes: [],
+									where: {
+										[Models.CourseAttributes.visibility]: Models.CourseVisibility.public,
+										[Models.CourseAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
+									},
+								},
+							],
+						},
+					],
+				},
+			],
+		}),
+});
 
 export type FindOneOptions = {
 	includeDisabled?: boolean;
@@ -49,29 +84,57 @@ export type FindOneOptions = {
 			courseClassListId: number;
 			number: number;
 	  });
-export const findOne = async (options: FindOneOptions): Promise<Models.CourseClass | undefined> => {
-	const { courseClassById, courseClassesByCourseClassListId } = await getData();
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.CourseClass | null>>({
+	getCacheKey: options =>
+		[!!options.includeDeleted, options.includeDisabled, options.id, options.courseClassListId, options.number].join(
+			"."
+		),
+	calculate: async (config, options) => {
+		const where: WhereOptions = {};
 
-	if (!options.includeDeleted && !options.includeDisabled)
-		if (options.id === undefined) {
-			const courseClassList = courseClassesByCourseClassListId.get(options.courseClassListId);
+		if (!options.includeDeleted) where[Models.CourseClassAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		else config.ignore();
 
-			if (courseClassList !== undefined)
-				return courseClassList
-					? courseClassList.find(courseClass => courseClass.number === options.number)
-					: undefined;
-		} else return courseClassById.get(options.id);
+		if (!options.includeDisabled) where[Models.CourseClassAttributes.disabled] = { [Op.or]: [null, false] };
 
-	let where: WhereOptions =
-		options.id !== undefined
-			? { id: options.id }
-			: { courseClassListId: options.courseClassListId, number: options.number };
-
-	if (!options.includeDisabled) where = { ...where, ...notDisabledCondition };
-	if (!options.includeDeleted) where = { ...where, ...getNotDeletedCondition() };
-
-	return (await Models.CourseClass.findOne({ where })) || undefined;
-};
+		return Models.CourseClass.findOne({
+			where,
+			include: [
+				{
+					model: Models.CourseClassList,
+					as: Models.CourseClassRelations.courseClassList,
+					attributes: [],
+					where: {
+						[Models.CourseClassListAttributes.status]: Models.CourseClassListStatus.public,
+						[Models.CourseClassListAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
+					},
+					include: [
+						{
+							model: Models.CourseEdition,
+							as: Models.CourseClassListRelations.courseEdition,
+							attributes: [],
+							where: {
+								[Models.CourseEditionAttributes.status]: Models.CourseEditionStatus.public,
+								[Models.CourseEditionAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
+							},
+							include: [
+								{
+									model: Models.Course,
+									as: Models.CourseEditionRelations.course,
+									attributes: [],
+									where: {
+										[Models.CourseAttributes.visibility]: Models.CourseVisibility.public,
+										[Models.CourseAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
+									},
+								},
+							],
+						},
+					],
+				},
+			],
+		});
+	},
+});
 
 export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.CourseClass> => {
 	const courseClass = await findOne(options);

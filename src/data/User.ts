@@ -1,8 +1,9 @@
 import * as Errors from "../errors";
 import * as Models from "../models";
 
+import { getDataHandler, getNotDeletedCondition } from "./Base";
+
 import { WhereOptions } from "sequelize";
-import { getData } from "./Base";
 
 export type FindOneOptions = {
 	includeDeleted?: boolean;
@@ -15,19 +16,22 @@ export type FindOneOptions = {
 			id?: undefined;
 			uid: string;
 	  });
-export const findOne = async (options: FindOneOptions): Promise<Models.User | undefined> => {
-	const { userById, userByUid } = await getData();
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.User | null>>({
+	getCacheKey: options => [options.id, options.includeDeleted].join("."),
+	calculate: async (config, options) => {
+		const where: WhereOptions =
+			options.id !== undefined
+				? { [Models.UserAttributes.id]: options.id }
+				: { [Models.UserAttributes.uid]: options.uid };
 
-	if (!options.includeDeleted)
-		return options.id !== undefined ? userById.get(options.id) : userByUid.get(options.uid);
+		if (!options.includeDeleted) where[Models.UserAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		else config.ignore();
 
-	const where: WhereOptions = {};
-
-	if (options.id !== undefined) where.id = options.id;
-	else where.email = options.uid;
-
-	return (await Models.User.findOne({ where })) || undefined;
-};
+		return Models.User.findOne({
+			where,
+		});
+	},
+});
 
 export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.User> => {
 	const result = await findOne(options);

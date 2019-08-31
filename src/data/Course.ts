@@ -2,24 +2,26 @@ import * as Errors from "../errors";
 import * as Models from "../models";
 
 import { Op, WhereOptions } from "sequelize";
-import { getData, getNotDeletedCondition, notDisabledCondition } from "./Base";
+import { getDataHandler, getNotDeletedCondition } from "./Base";
 
 export type FindAllOptions = {
 	includeDeleted?: boolean;
 	includeDisabled?: boolean;
 };
-export const findAll = async (options: FindAllOptions): Promise<Models.Course[]> => {
-	const { publicCourses } = await getData();
+export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.Course[]>>({
+	getCacheKey: options => `${!!options.includeDeleted}.${!!options.includeDisabled}`,
+	calculate: async (config, options) => {
+		const where: WhereOptions = {};
 
-	if (!options.includeDeleted && !options.includeDisabled) return publicCourses;
+		if (!options.includeDeleted) where[Models.CourseAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		else config.ignore();
 
-	let where: WhereOptions = {};
+		if (!options.includeDisabled)
+			where[Models.CourseAttributes.visibility] = { [Op.not]: Models.CourseVisibility.public };
 
-	if (!options.includeDisabled) where = { ...where, ...notDisabledCondition };
-	if (!options.includeDeleted) where = { ...where, ...getNotDeletedCondition() };
-
-	return Models.Course.findAll({ where });
-};
+		return Models.Course.findAll({ where });
+	},
+});
 
 export type FindOneOptions = ({
 	includeDeleted?: boolean;
@@ -34,24 +36,25 @@ export type FindOneOptions = ({
 				id?: undefined;
 				code: string;
 		  });
-export const findOne = async (options: FindOneOptions): Promise<Models.Course | undefined> => {
-	const { courseById, courseByCode } = await getData();
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.Course | null>>({
+	getCacheKey: options => `${options.id}.${options.code}.${!!options.includeDeleted}.${!!options.includeDisabled}`,
+	calculate: async (config, options) => {
+		const where: WhereOptions =
+			options.id !== undefined
+				? { [Models.CourseAttributes.id]: options.id }
+				: { [Models.CourseAttributes.code]: options.code };
 
-	if (!options.includeDeleted && !options.includeDisabled)
-		return options.id !== undefined ? courseById.get(options.id) : courseByCode.get(options.code);
+		if (!options.includeDeleted) where[Models.CourseAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		else config.ignore();
 
-	let where: WhereOptions = {};
+		if (!options.includeDisabled)
+			where[Models.CourseAttributes.visibility] = { [Op.not]: Models.CourseVisibility.public };
 
-	if (!options.includeDisabled) where = { ...where, ...notDisabledCondition };
-	if (!options.includeDeleted) where = { ...where, ...getNotDeletedCondition() };
-
-	where = { [Op.and]: [where, options.id === undefined ? { code: options.code } : { id: options.id }] };
-
-	const course = await Models.Course.findOne({ where });
-
-	return course ? course : undefined;
-};
-
+		return Models.Course.findOne({
+			where,
+		});
+	},
+});
 export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.Course> => {
 	const course = await findOne(options);
 

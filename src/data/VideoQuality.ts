@@ -1,38 +1,51 @@
 import * as Errors from "../errors";
 import * as Models from "../models";
 
-import { getData } from "./Base";
+import { getDataHandler, getNotDeletedCondition } from "./Base";
+
+import { WhereOptions } from "sequelize/types";
 
 export type FindAllByVideoIdOptions = {
 	videoId: number;
 	includeDeleted?: boolean;
 };
-export const findAllByVideoId = async ({
-	videoId,
-	includeDeleted,
-}: FindAllByVideoIdOptions): Promise<Models.VideoQuality[]> => {
-	const { videoQualitiesByVideoId } = await getData();
+export const findAllByVideoId = getDataHandler<(options: FindAllByVideoIdOptions) => Promise<Models.VideoQuality[]>>({
+	getCacheKey: options => [options.videoId, !!options.includeDeleted].join("."),
+	calculate: async (config, options) => {
+		const where: WhereOptions = {
+			[Models.VideoQualityAttributes.videoId]: options.videoId,
+		};
 
-	if (!includeDeleted) return videoQualitiesByVideoId.get(videoId) || [];
+		if (!options.includeDeleted)
+			where[Models.VideoQualityAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		else config.ignore();
 
-	return Models.VideoQuality.findAll({
-		where: {
-			videoId,
-		},
-	});
-};
+		return Models.VideoQuality.findAll({
+			where,
+		});
+	},
+});
 
 export type FindOneOptions = {
 	id: number;
 	includeDeleted?: boolean;
 };
-export const findOne = async ({ id, includeDeleted }: FindOneOptions): Promise<Models.VideoQuality | undefined> => {
-	const { videoQualityById } = await getData();
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.VideoQuality | null>>({
+	getCacheKey: options => [options.id, !!options.includeDeleted].join("."),
+	calculate: async (config, options) => {
+		const where: WhereOptions = {
+			[Models.VideoQualityAttributes.id]: options.id,
+		};
 
-	if (!includeDeleted) return videoQualityById.get(id);
+		if (!options.includeDeleted)
+			where[Models.VideoQualityAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		else config.ignore();
 
-	return (await Models.VideoQuality.findOne({ where: { id } })) || undefined;
-};
+		return Models.VideoQuality.findOne({
+			where,
+		});
+	},
+});
 
 export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.VideoQuality> => {
 	const result = await findOne(options);

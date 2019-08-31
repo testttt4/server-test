@@ -1,37 +1,46 @@
 import * as Errors from "../errors";
 import * as Models from "../models";
 
-import { getData } from "./Base";
+import { getDataHandler, getNotDeletedCondition } from "./Base";
+
+import { WhereOptions } from "sequelize/types";
 
 export type FindAllOptions = {
 	includeDeleted?: boolean;
 };
+export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.FAQ[]>>({
+	getCacheKey: options => [options.includeDeleted].join("."),
+	calculate: async (config, params) => {
+		const where: WhereOptions = {};
 
-export const findAll = async ({ includeDeleted }: FindAllOptions): Promise<Models.FAQ[]> => {
-	const { faqs } = await getData();
+		if (!params.includeDeleted) where[Models.FAQAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		else config.ignore();
 
-	if (!includeDeleted) return faqs;
-
-	return Models.FAQ.findAll();
-};
+		return Models.FAQ.findAll({
+			where,
+		});
+	},
+});
 
 export type FindOneOptions = {
 	id: number;
 	includeDeleted?: boolean;
 };
-export const findOne = async ({ id, includeDeleted }: FindOneOptions): Promise<Models.FAQ | undefined> => {
-	const { faqById } = await getData();
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.FAQ | null>>({
+	getCacheKey: options => [options.id, options.includeDeleted].join("."),
+	calculate: async (config, options) => {
+		const where: WhereOptions = {
+			[Models.FAQAttributes.id]: options.id,
+		};
 
-	if (!includeDeleted) return faqById.get(id);
+		if (!options.includeDeleted) where[Models.FAQAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		else config.ignore();
 
-	return (
-		(await Models.FAQ.findOne({
-			where: {
-				id,
-			},
-		})) || undefined
-	);
-};
+		return Models.FAQ.findOne({
+			where,
+		});
+	},
+});
 
 export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.FAQ> => {
 	const result = await findOne(options);
