@@ -69,18 +69,22 @@ const deploy = async () => {
 
 	console.log(shouldDeleteDestinationPath ? `Will delete ${DESTINATION_PATH}` : `Won't delete ${DESTINATION_PATH}`);
 
-	console.log(
-		await ssh.exec(
-			[
-				`pm2 stop ${PM2_PROCESS_NAME}`,
-				`pm2 delete ${PM2_PROCESS_NAME}`,
-				shouldDeleteDestinationPath && `rm -rf ${DESTINATION_PATH}`,
-				`mkdir -p ${DESTINATION_PATH}`,
-			]
-				.filter(Boolean)
-				.join("; ")
-		)
-	);
+	try {
+		console.log(
+			await ssh.exec(
+				[
+					`pm2 stop ${PM2_PROCESS_NAME}`,
+					`pm2 delete ${PM2_PROCESS_NAME}`,
+					shouldDeleteDestinationPath && `rm -rf ${DESTINATION_PATH}`,
+					`mkdir -p ${DESTINATION_PATH}`,
+				]
+					.filter(Boolean)
+					.join("; ")
+			)
+		);
+	} catch (e) {
+		console.log(e.toString("utf8"));
+	}
 
 	const pm2Config = {
 		apps: [
@@ -123,8 +127,10 @@ const deploy = async () => {
 		`node ${path.join(DESTINATION_PATH, "scripts", "populateDB.js")}`,
 		`pm2 start ${pm2ConfigFilename}`,
 	]) {
+		console.log(command);
+
 		try {
-			console.log(command, await ssh.exec("pwd"));
+			console.log(await ssh.exec("pwd"));
 		} catch (e) {
 			console.log(e.toString("utf8"));
 		}
