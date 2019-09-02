@@ -123,7 +123,11 @@ const deploy = async () => {
 		`node ${path.join(DESTINATION_PATH, "scripts", "populateDB.js")}`,
 		`pm2 start ${pm2ConfigFilename}`,
 	]) {
-		console.log(command, await ssh.exec("pwd"));
+		try {
+			console.log(command, await ssh.exec("pwd"));
+		} catch (e) {
+			console.log(e.toString("utf8"));
+		}
 
 		try {
 			console.log(await ssh.exec([`cd ${DESTINATION_PATH}`, command].join(" && ")));
