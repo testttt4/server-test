@@ -136,21 +136,6 @@ const deploy = async () => {
 		}
 	}
 
-	try {
-		console.log(
-			await ssh.exec(
-				[
-					"npm ci",
-					`node ${path.join(DESTINATION_PATH, "scripts", "populateDB.js")}`,
-					`pm2 start ${pm2ConfigFilename}`,
-				].join(" && ")
-			)
-		);
-	} catch (e) {
-		console.log("error");
-		console.log(e.toString("utf8"));
-	}
-
 	console.log("- done");
 	ssh.close();
 };
