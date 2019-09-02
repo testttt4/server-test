@@ -119,14 +119,15 @@ const deploy = async () => {
 	});
 
 	for (const command of [
-		[`cd ${DESTINATION_PATH}`, "npm ci"].join(" && "),
+		"npm ci",
 		`node ${path.join(DESTINATION_PATH, "scripts", "populateDB.js")}`,
 		`pm2 start ${pm2ConfigFilename}`,
 	]) {
+		console.log(command, await ssh.exec("pwd"));
+
 		try {
-			console.log(await ssh.exec(command));
+			console.log(await ssh.exec([`cd ${DESTINATION_PATH}`, command].join(" && ")));
 		} catch (e) {
-			if (!(e instanceof Buffer)) throw e;
 			console.log(e.toString("utf8"));
 		}
 	}
