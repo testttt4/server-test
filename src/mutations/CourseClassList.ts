@@ -12,7 +12,7 @@ export type CreateOptions = {
 };
 export const create = async (
 	options: CreateOptions
-): Promise<[true, Models.CourseClassList] | [false, Validators.CourseClassList.InvalidatedData]> => {
+): Promise<[true, Models.CourseClassListTableRow] | [false, Validators.CourseClassList.InvalidatedData]> => {
 	const { data } = options;
 	const validation = await Validators.CourseClassList.validateData(data);
 
@@ -34,7 +34,7 @@ export const create = async (
 
 	Data.Base.Cache.removeCache();
 
-	return [true, courseClassList];
+	return [true, courseClassList.toTableRow()];
 };
 
 export type UpdateOptions<TKeys extends keyof Validators.CourseClassList.DataToValidate> = {
@@ -47,9 +47,9 @@ export const update = async <TDataKeys extends keyof Validators.CourseClassList.
 	data,
 	userId,
 }: UpdateOptions<TDataKeys>): Promise<
-	[true, Models.CourseClassList] | [false, Validators.CourseClassList.InvalidatedData]
+	[true, Models.CourseClassListTableRow] | [false, Validators.CourseClassList.InvalidatedData]
 > => {
-	const courseClassList = await Data.CourseClassList.findOneOrThrow({ id });
+	const courseClassList = Models.CourseClassList.fromTableRow(await Data.CourseClassList.findOneOrThrow({ id }));
 
 	const validation = await Validators.CourseClassList.validateData(data);
 	if (!validation[0]) return validation;
@@ -70,7 +70,7 @@ export const update = async <TDataKeys extends keyof Validators.CourseClassList.
 
 	Data.Base.Cache.removeCache();
 
-	return [true, courseClassList];
+	return [true, courseClassList.toTableRow()];
 };
 
 const _removeCourseClassList = async ({
@@ -96,7 +96,7 @@ export const removeCourseClassList = async (options: RemoveCourseClassListOption
 
 	const courseClassList = await Data.CourseClassList.findOneOrThrow({
 		id,
-	});
+	}).then(Models.CourseClassList.fromTableRow);
 
 	await _removeCourseClassList({ courseClassList, userId });
 };
@@ -108,7 +108,11 @@ export type RemoveAllByCourseEditionIdOptions = {
 export const removeAllByCourseEditionId = async ({ courseEditionId, userId }: RemoveAllByCourseEditionIdOptions) => {
 	const courseClassLists = await Data.CourseClassList.findAll({ courseEditionId });
 
-	await Promise.all(courseClassLists.map(courseClassList => _removeCourseClassList({ courseClassList, userId })));
+	await Promise.all(
+		courseClassLists
+			.map(Models.CourseClassList.fromTableRow)
+			.map(courseClassList => _removeCourseClassList({ courseClassList, userId }))
+	);
 
 	Data.Base.Cache.removeCache();
 };

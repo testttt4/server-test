@@ -9,7 +9,7 @@ export type FindAllOptions = {
 	includeDisabled?: boolean;
 	includeDeleted?: boolean;
 };
-export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.CourseClassList[]>>({
+export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.CourseClassListTableRow[]>>({
 	getCacheKey: options => [options.courseEditionId, !!options.includeDeleted, !!options.includeDisabled].join("."),
 	calculate: async (config, options) => {
 		const where: WhereOptions = {
@@ -27,7 +27,7 @@ export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Model
 
 		return Models.CourseClassList.findAll({
 			where,
-		});
+		}).then(courseClassLists => courseClassLists.map(ccl => ccl.toTableRow()));
 	},
 });
 
@@ -36,7 +36,7 @@ export type FindOne = {
 	includeDisabled?: boolean;
 	includeDeleted?: boolean;
 };
-export const findOne = getDataHandler<(options: FindOne) => Promise<Models.CourseClassList | null>>({
+export const findOne = getDataHandler<(options: FindOne) => Promise<Models.CourseClassListTableRow | null>>({
 	getCacheKey: options => [options.id, !!options.includeDeleted, !!options.includeDisabled].join("."),
 	calculate: async (config, options) => {
 		const where: WhereOptions = {
@@ -52,11 +52,11 @@ export const findOne = getDataHandler<(options: FindOne) => Promise<Models.Cours
 				[Op.not]: Models.CourseClassListVisibility.disabled,
 			};
 
-		return Models.CourseClassList.findOne({ where });
+		return Models.CourseClassList.findOne({ where }).then(ccl => ccl && ccl.toTableRow());
 	},
 });
 
-export const findOneOrThrow = async (options: FindOne): Promise<Models.CourseClassList> => {
+export const findOneOrThrow = async (options: FindOne): Promise<Models.CourseClassListTableRow> => {
 	const courseClassList = await findOne(options);
 	if (!courseClassList) throw new Errors.ObjectNotFoundError("La lista de clases no existe");
 

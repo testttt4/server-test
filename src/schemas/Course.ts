@@ -1,44 +1,35 @@
+import * as Models from "../models";
+
 import { Field, Int, ObjectType } from "type-graphql";
-import { User } from "./User";
 
 @ObjectType("Course")
-export class Course {
+export class Course implements Models.CourseTableRow {
 	@Field(() => Int)
-	public id: number;
+	public id: Models.CourseTableRow["id"];
 
-	@Field()
-	public code: string;
+	@Field(() => String)
+	public code: Models.CourseTableRow["code"];
 
-	@Field()
-	public name: string;
+	@Field(() => String)
+	public name: Models.CourseTableRow["name"];
 
-	@Field({ nullable: true })
-	public iconURL: string;
+	@Field(() => String, { nullable: true })
+	public iconURL: Models.CourseTableRow["iconURL"];
 
-	@Field({ nullable: true })
-	public eva: string;
-
-	@Field({ nullable: true })
-	public semester: number;
-
-	@Field({ nullable: true })
-	public year: number;
-
-	@Field(() => Date)
-	public createdAt: Date;
-
-	@Field(() => User, { nullable: true })
-	public createdBy: User;
+	@Field(() => String, { nullable: true })
+	public eva: Models.CourseTableRow["eva"];
 
 	@Field(() => Date, { nullable: true })
-	public updatedAt: Date;
-
-	@Field(() => User, { nullable: true })
-	public updatedBy: User;
+	public createdAt: Models.CourseTableRow["createdAt"];
 
 	@Field(() => Date, { nullable: true })
-	public deletedAt: Date;
+	public updatedAt: Models.CourseTableRow["updatedAt"];
 
-	@Field(() => User, { nullable: true })
-	public deletedBy: User;
+	@Field(() => Date, { nullable: true })
+	public deletedAt: Models.CourseTableRow["deletedAt"];
+
+	public visibility: Models.CourseTableRow["visibility"];
+	public createdById: Models.CourseTableRow["createdById"];
+	public updatedById: Models.CourseTableRow["updatedById"];
+	public deletedById: Models.CourseTableRow["deletedById"];
 }

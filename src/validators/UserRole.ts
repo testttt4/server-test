@@ -1,16 +1,18 @@
 import * as Errors from "../errors";
+import * as Models from "../models";
 
 import { validateString } from "./Base";
 
-export const validateName = (name: string): [true, string] | [false, Errors.BadUserInput[]] => {
-	name = name.trim();
+export const validateName = (
+	name: string
+): [true, keyof typeof Models.UserRoleName] | [false, Errors.BadUserInput[]] => {
 	const errors = validateString({ value: name, max: 255, notEmpty: true });
 
-	return errors.length > 0 ? [false, errors] : [true, name];
+	return errors.length > 0 ? [false, errors] : [true, name as keyof typeof Models.UserRoleName];
 };
 
 export type CreateData = {
-	name: string;
+	name: keyof typeof Models.UserRoleName;
 };
 export type ValidatedCreateData = CreateData;
 export type InvalidatedCreateData = Partial<Record<keyof CreateData, Errors.BadUserInput | Errors.BadUserInput[]>>;

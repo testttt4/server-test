@@ -1,25 +1,31 @@
+import * as Models from "../models";
+
 import { Field, Int, ObjectType } from "type-graphql";
 
 @ObjectType("FAQ")
-export class FAQ {
+export class FAQ implements Models.FAQTableRow {
 	@Field(() => Int)
-	public id: number;
+	public id: Models.FAQTableRow["id"];
 
-	@Field()
-	public title: string;
+	@Field(() => String)
+	public title: Models.FAQTableRow["title"];
 
-	@Field()
-	public content: string;
+	@Field(() => String)
+	public content: Models.FAQTableRow["content"];
 
-	@Field()
-	public isHTML: boolean;
-
-	@Field(() => Date)
-	public createdAt: Date;
+	@Field(() => Boolean)
+	public isHTML: Models.FAQTableRow["isHTML"];
 
 	@Field(() => Date, { nullable: true })
-	public updatedAt: Date;
+	public createdAt: Models.FAQTableRow["createdAt"];
 
 	@Field(() => Date, { nullable: true })
-	public deletedAt: Date;
+	public updatedAt: Models.FAQTableRow["updatedAt"];
+
+	@Field(() => Date, { nullable: true })
+	public deletedAt: Models.FAQTableRow["updatedAt"];
+
+	public createdById: Models.FAQTableRow["createdById"];
+	public updatedById: Models.FAQTableRow["updatedById"];
+	public deletedById: Models.FAQTableRow["deletedById"];
 }

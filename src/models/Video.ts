@@ -14,6 +14,7 @@ import { CourseClass } from "./internal";
 import { Nullable } from "../typings/helperTypes";
 import { User } from "./internal";
 import { VideoQuality } from "./internal";
+import { pick } from "../utils/Helper";
 
 export const VideoAttributes: {
 	[K in keyof Required<
@@ -44,6 +45,8 @@ export const VideoAttributes: {
 	deletedById: "deletedById",
 };
 
+export type VideoTableRow = Pick<Video, keyof typeof VideoAttributes>;
+
 export const VideoRelations: {
 	[K in keyof Required<Pick<Video, "courseClass" | "createdBy" | "updatedBy" | "deletedBy">>]: K;
 } = {
@@ -55,6 +58,10 @@ export const VideoRelations: {
 
 @Table({ modelName: "Video" })
 export class Video extends Model<Video> {
+	public static fromTableRow(data: VideoTableRow): Video {
+		return new Video(data);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.INTEGER)
@@ -74,7 +81,7 @@ export class Video extends Model<Video> {
 	public position: number;
 
 	@Column(DataType.DATE)
-	public createdAt?: Nullable<Date>;
+	public createdAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -87,7 +94,7 @@ export class Video extends Model<Video> {
 	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public updatedAt?: Nullable<Date>;
+	public updatedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -97,7 +104,7 @@ export class Video extends Model<Video> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date>;
+	public deletedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -105,4 +112,6 @@ export class Video extends Model<Video> {
 
 	@BelongsTo(() => User, VideoAttributes.deletedById)
 	public deletedBy: Nullable<User>;
+
+	public toTableRow = () => pick(this, Object.keys(VideoAttributes) as Array<keyof typeof VideoAttributes>);
 }

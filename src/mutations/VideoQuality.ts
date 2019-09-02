@@ -6,12 +6,6 @@ import * as VideoFormat from "./VideoFormat";
 import { identity } from "../utils/Helper";
 import moment from "moment";
 
-// export type VideoQualityData = {
-// 	height: number;
-// 	width: number;
-// 	formats: Validators.VideoFormat.CreateData[];
-// };
-
 export type CreateFromValidatedDataOptions = {
 	userId: number;
 	videoId: number;
@@ -27,7 +21,7 @@ export type CreateFromValidatedDataOptions = {
 };
 export const createFromValidatedData = async (
 	options: CreateFromValidatedDataOptions
-): Promise<Models.VideoQuality> => {
+): Promise<Models.VideoQualityTableRow> => {
 	const { videoId, data } = options;
 
 	const result = await Models.VideoQuality.create(
@@ -45,7 +39,7 @@ export const createFromValidatedData = async (
 
 	Data.Base.Cache.removeCache();
 
-	return result;
+	return result.toTableRow();
 };
 
 export type CreateOptions = {
@@ -55,7 +49,7 @@ export type CreateOptions = {
 };
 export const create = async (
 	options: CreateOptions
-): Promise<[true, Models.VideoQuality] | [false, Validators.VideoQuality.InvalidatedData]> => {
+): Promise<[true, Models.VideoQualityTableRow] | [false, Validators.VideoQuality.InvalidatedData]> => {
 	const validation = await Validators.VideoQuality.validateData(options.data);
 
 	if (!validation[0]) return validation;
@@ -84,7 +78,7 @@ export type RemoveVideoQualityOptions = {
 	userId: number;
 };
 export const removeVideoQuality = async ({ id, userId }: RemoveVideoQualityOptions) => {
-	const videoQuality = await Data.VideoQuality.findOneOrThrow({ id });
+	const videoQuality = Models.VideoQuality.fromTableRow(await Data.VideoQuality.findOneOrThrow({ id }));
 
 	await _removeVideoQuality({ videoQuality, userId });
 
@@ -98,7 +92,11 @@ export type RemoveAllVideoQualitiesByVideoId = {
 export const removeAllVideoQualitiesByVideoId = async ({ videoId, userId }: RemoveAllVideoQualitiesByVideoId) => {
 	const videoQualities = await Data.VideoQuality.findAllByVideoId({ videoId });
 
-	await Promise.all(videoQualities.map(videoQuality => _removeVideoQuality({ videoQuality, userId })));
+	await Promise.all(
+		videoQualities
+			.map(Models.VideoQuality.fromTableRow)
+			.map(videoQuality => _removeVideoQuality({ videoQuality, userId }))
+	);
 
 	Data.Base.Cache.removeCache();
 };

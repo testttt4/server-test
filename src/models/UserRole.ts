@@ -11,6 +11,7 @@ import {
 import { User, UserUserRole } from "./internal";
 
 import { Nullable } from "../typings/helperTypes";
+import { pick } from "../utils/Helper";
 
 export const UserRoleName: { [K in "admin" | "user"]: K } = {
 	admin: "admin",
@@ -27,6 +28,8 @@ export const UserRoleAttributes: {
 	deletedAt: "deletedAt",
 };
 
+export type UserRoleTableRow = Pick<UserRole, keyof typeof UserRoleAttributes>;
+
 export const UserRoleRelations: {
 	[K in keyof Required<Pick<UserRole, "users">>]: K;
 } = {
@@ -35,6 +38,10 @@ export const UserRoleRelations: {
 
 @Table({ modelName: "UserRole" })
 export class UserRole extends Model<UserRole> {
+	public static fromTableRow(data: UserRole): UserRole {
+		return new UserRole(data);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.SMALLINT)
@@ -48,11 +55,13 @@ export class UserRole extends Model<UserRole> {
 	public users: User[];
 
 	@Column(DataType.DATE)
-	public createdAt?: Nullable<Date>;
+	public createdAt: Nullable<Date>;
 
 	@Column(DataType.DATE)
-	public updatedAt?: Nullable<Date>;
+	public updatedAt: Nullable<Date>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date>;
+	public deletedAt: Nullable<Date>;
+
+	public toTableRow = () => pick(this, Object.keys(UserRoleAttributes) as Array<keyof typeof UserRoleAttributes>);
 }

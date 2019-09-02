@@ -1,9 +1,3 @@
-import * as Data from "../data";
-import * as Errors from "../errors";
-import * as Models from "../models";
-import * as Mutations from "../mutations";
-import * as Schemas from "../schemas";
-
 import {
 	Arg,
 	Ctx,
@@ -18,8 +12,12 @@ import {
 	Root,
 	registerEnumType,
 } from "type-graphql";
-import { Authenticated } from "../middlewares";
 import { Context } from "../Context";
+import * as Data from "../data";
+import * as Errors from "../errors";
+import { Authenticated } from "../middlewares";
+import * as Mutations from "../mutations";
+import * as Schemas from "../schemas";
 
 export enum UserRoleName {
 	Admin = "admin",
@@ -69,7 +67,7 @@ export class SignInOutput {
 export class User {
 	// region Mutations
 	@Mutation(() => SignUpOutput, { nullable: true })
-	public async signUp(@Arg("user") signUpInput: SignUpInput): Promise<{ user: Models.User; token: string }> {
+	public async signUp(@Arg("user") signUpInput: SignUpInput): Promise<{ user: Schemas.User; token: string }> {
 		const signUp = await Mutations.User.signUp({ data: signUpInput });
 
 		if (!signUp[0]) throw Errors.BadUserInputError(signUp[1]);
@@ -81,7 +79,7 @@ export class User {
 	public async signIn(
 		@Arg("user") userInput: SignInInput,
 		@Ctx() context: Context
-	): Promise<{ user: Models.User; token: string }> {
+	): Promise<{ user: Schemas.User; token: string }> {
 		const signInResponse = await Mutations.User.signIn(userInput);
 
 		context.me = signInResponse.user;
@@ -92,7 +90,7 @@ export class User {
 
 	// region Queries
 	@Query(() => Schemas.User, { nullable: true })
-	public user(@Arg("id", () => Int) id: number): Promise<Models.User> {
+	public user(@Arg("id", () => Int) id: number): Promise<Schemas.User> {
 		return Data.User.findOneOrThrow({
 			id,
 		});
@@ -100,7 +98,7 @@ export class User {
 
 	@Query(() => Schemas.User, { nullable: true })
 	@Authenticated()
-	public me(@Ctx() context: Context): Promise<Models.User> {
+	public me(@Ctx() context: Context): Promise<Schemas.User> {
 		const { id } = context.me!;
 
 		return Data.User.findOneOrThrow({
@@ -111,7 +109,7 @@ export class User {
 
 	// region FieldResolvers
 	@FieldResolver(() => [Schemas.UserRole])
-	public async roles(@Root() user: Models.User): Promise<Models.UserRole[]> {
+	public async roles(@Root() user: Schemas.User): Promise<Schemas.UserRole[]> {
 		return Data.UserRole.findAllByUserId({ userId: user.id });
 	}
 	// endregion

@@ -6,8 +6,8 @@ export const getNotDeletedCondition = () => ({
 });
 
 export type CacheItem<T> = {
-	set: <K extends keyof T>(key: K, value: T[K]) => void;
-	get: <K extends keyof T>(key: K) => T[K] | undefined;
+	set: <K extends keyof T>(key: K, value: () => T[K]) => void;
+	get: <K extends keyof T>(key: K) => (() => T[K]) | undefined;
 	has: <K extends keyof T>(key: K) => boolean;
 	remove: <K extends keyof T>(key: K) => void;
 };
@@ -66,11 +66,11 @@ export const getDataHandler = <T extends (...args: any[]) => any>(params: {
 				...args
 			);
 
-			if (shouldSave) cacheItem.set(cacheKey, result);
+			if (shouldSave) cacheItem.set(cacheKey, () => result);
 
 			return result;
 		}
 
-		return cachedData;
+		return cachedData && cachedData();
 	}) as T;
 };

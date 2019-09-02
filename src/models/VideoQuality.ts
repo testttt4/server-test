@@ -12,6 +12,7 @@ import {
 import { User, Video, VideoFormat } from "./internal";
 
 import { Nullable } from "../typings/helperTypes";
+import { pick } from "../utils/Helper";
 
 export const VideoQualityAttributes: {
 	[K in keyof Required<
@@ -42,6 +43,8 @@ export const VideoQualityAttributes: {
 	deletedById: "deletedById",
 };
 
+export type VideoQualityTableRow = Pick<VideoQuality, keyof typeof VideoQualityAttributes>;
+
 export const VideoQualityRelations: {
 	[K in keyof Required<Pick<VideoQuality, "video" | "videoFormats" | "createdBy" | "updatedBy" | "deletedBy">>]: K;
 } = {
@@ -54,6 +57,10 @@ export const VideoQualityRelations: {
 
 @Table({ modelName: "VideoQuality" })
 export class VideoQuality extends Model<VideoQuality> {
+	public static fromTableRow(data: VideoQualityTableRow): VideoQuality {
+		return new VideoQuality(data);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.INTEGER)
@@ -73,7 +80,7 @@ export class VideoQuality extends Model<VideoQuality> {
 	public height: number;
 
 	@Column(DataType.DATE)
-	public createdAt?: Nullable<Date>;
+	public createdAt: Nullable<Date>;
 
 	@HasMany(() => VideoFormat, "videoQualityId")
 	public videoFormats: VideoFormat[];
@@ -86,7 +93,7 @@ export class VideoQuality extends Model<VideoQuality> {
 	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public updatedAt?: Nullable<Date>;
+	public updatedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -96,7 +103,7 @@ export class VideoQuality extends Model<VideoQuality> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date>;
+	public deletedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -104,4 +111,7 @@ export class VideoQuality extends Model<VideoQuality> {
 
 	@BelongsTo(() => User, VideoQualityAttributes.deletedById)
 	public deletedBy: Nullable<User>;
+
+	public toTableRow = () =>
+		pick(this, Object.keys(VideoQualityAttributes) as Array<keyof typeof VideoQualityAttributes>);
 }

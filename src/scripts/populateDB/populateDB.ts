@@ -254,7 +254,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 		fs.mkdirSync(serverConfig.COURSE_ICONS_PATH, { recursive: true });
 
 	const getCleanReadCourseName = (readCourse: ReadCourse) =>
-		readCourse.name.replace(/\((.+)(Práctico|Teórico|Edición).+\)/g, "").trim();
+		readCourse.name.replace(/\( *(Práctico|Teórico|Edición).+\)/g, "").trim();
 
 	const getCleanReadCourseCode = (readCourse: ReadCourse): string => {
 		const { code, year } = readCourse;
@@ -263,14 +263,18 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 
 		const posibleEndings = [`-${yearString}`, yearString, `-${yearString.substr(-2)}`, yearString.substr(-2)];
 
-		return posibleEndings.reduce(
+		const res = posibleEndings.reduce(
 			(result, posibleEnding) => (result.endsWith(posibleEnding) ? result.replace(posibleEnding, "") : result),
 			code
 		);
+
+		return res;
 	};
 
 	const coursesByCode = new Map<string, Models.Course>();
 	const courseEditionsByCode = new Map<string, Models.CourseEdition[]>();
+
+	readCourses.find(c => c.code === "vyo15")!.year = 2015;
 
 	for (const readCourse of readCourses) {
 		const cleanCourseCode = getCleanReadCourseCode(readCourse);

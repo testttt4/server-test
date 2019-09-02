@@ -10,7 +10,7 @@ export type FindAllByVideoQualityOptions = {
 	includeDeleted?: boolean;
 };
 export const findAllByVideoQuality = getDataHandler<
-	(options: FindAllByVideoQualityOptions) => Promise<Models.VideoFormat[]>
+	(options: FindAllByVideoQualityOptions) => Promise<Models.VideoFormatTableRow[]>
 >({
 	getCacheKey: options => [options.videoQualityId, !!options.includeDeleted].join("."),
 	calculate: async (config, options) => {
@@ -23,7 +23,7 @@ export const findAllByVideoQuality = getDataHandler<
 
 		return Models.VideoFormat.findAll({
 			where,
-		});
+		}).then(videoFormats => videoFormats.map(vf => vf.toTableRow()));
 	},
 });
 
@@ -31,7 +31,7 @@ export type FindOneOptions = {
 	id: number;
 	includeDeleted?: boolean;
 };
-export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.VideoFormat | null>>({
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.VideoFormatTableRow | null>>({
 	getCacheKey: options => [options.id, !!options.includeDeleted].join("."),
 	calculate: async (config, options) => {
 		const where: WhereOptions = {
@@ -43,11 +43,11 @@ export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Model
 
 		return Models.VideoFormat.findOne({
 			where,
-		});
+		}).then(vf => vf && vf.toTableRow());
 	},
 });
 
-export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.VideoFormat> => {
+export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.VideoFormatTableRow> => {
 	const result = await findOne(options);
 
 	if (!result) throw new Errors.ObjectNotFoundError("El formato no existe");

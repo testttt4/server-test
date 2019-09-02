@@ -3,30 +3,33 @@ import * as Models from "../models";
 import { Field, GraphQLISODateTime, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
-export class CourseEdition
-	implements
-		Pick<Models.CourseEdition, "id" | "name" | "semester" | "year" | "createdAt" | "updatedAt" | "deletedAt"> {
+export class CourseEdition implements Models.CourseEditionTableRow {
 	@Field(() => Int)
-	public id: Models.CourseEdition["id"];
+	public id: Models.CourseEditionTableRow["id"];
 
 	@Field(() => String)
-	public name: Models.CourseEdition["name"];
+	public name: Models.CourseEditionTableRow["name"];
 
 	@Field(() => Int)
-	public semester: Models.CourseEdition["semester"];
+	public semester: Models.CourseEditionTableRow["semester"];
 
 	@Field(() => Int)
-	public year: Models.CourseEdition["year"];
+	public year: Models.CourseEditionTableRow["year"];
 
 	@Field(() => String)
-	public visibility: Models.CourseEdition["visibility"];
+	public visibility: Models.CourseEditionTableRow["visibility"];
 
 	@Field(() => GraphQLISODateTime, { nullable: true })
-	public createdAt: Models.CourseEdition["createdAt"];
+	public createdAt: Models.CourseEditionTableRow["createdAt"];
 
 	@Field(() => GraphQLISODateTime, { nullable: true })
-	public updatedAt: Models.CourseEdition["updatedAt"];
+	public updatedAt: Models.CourseEditionTableRow["updatedAt"];
 
 	@Field(() => GraphQLISODateTime, { nullable: true })
-	public deletedAt?: Models.CourseEdition["deletedAt"];
+	public deletedAt: Models.CourseEditionTableRow["deletedAt"];
+
+	public courseId: Models.CourseEditionTableRow["courseId"];
+	public createdById: Models.CourseEditionTableRow["createdById"];
+	public updatedById: Models.CourseEditionTableRow["updatedById"];
+	public deletedById: Models.CourseEditionTableRow["deletedById"];
 }

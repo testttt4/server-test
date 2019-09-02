@@ -12,6 +12,7 @@ import {
 import { Course, CourseClassList, User } from "./internal";
 
 import { Nullable } from "../typings/helperTypes";
+import { pick } from "../utils/Helper";
 
 export const CourseEditionVisibility: { [K in "public" | "hidden" | "disabled"]: K } = {
 	public: "public",
@@ -52,6 +53,8 @@ export const CourseEditionAttributes: {
 	deletedById: "deletedById",
 };
 
+export type CourseEditionTableRow = Pick<CourseEdition, keyof typeof CourseEditionAttributes>;
+
 export const CourseEditionRelations: {
 	[K in keyof Required<
 		Pick<CourseEdition, "course" | "courseClassLists" | "createdBy" | "updatedBy" | "deletedBy">
@@ -66,6 +69,10 @@ export const CourseEditionRelations: {
 
 @Table({ modelName: "CourseEdition" })
 export class CourseEdition extends Model<CourseEdition> {
+	public static fromTableRow(data: CourseEditionTableRow): CourseEdition {
+		return new CourseEdition(data);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.SMALLINT)
@@ -94,7 +101,7 @@ export class CourseEdition extends Model<CourseEdition> {
 	public visibility: keyof typeof CourseEditionVisibility;
 
 	@Column(DataType.DATE)
-	public createdAt?: Nullable<Date>;
+	public createdAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -104,7 +111,7 @@ export class CourseEdition extends Model<CourseEdition> {
 	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public updatedAt?: Nullable<Date>;
+	public updatedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -114,7 +121,7 @@ export class CourseEdition extends Model<CourseEdition> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date>;
+	public deletedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -122,4 +129,7 @@ export class CourseEdition extends Model<CourseEdition> {
 
 	@BelongsTo(() => User, CourseEditionAttributes.deletedById)
 	public deletedBy: Nullable<User>;
+
+	public toTableRow = () =>
+		pick(this, Object.keys(CourseEditionAttributes) as Array<keyof typeof CourseEditionAttributes>);
 }

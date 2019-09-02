@@ -13,7 +13,7 @@ export type CreateOptions = {
 };
 export const create = async (
 	options: CreateOptions
-): Promise<[true, Models.CourseEdition] | [false, Validators.CourseEdition.InvalidatedData]> => {
+): Promise<[true, Models.CourseEditionTableRow] | [false, Validators.CourseEdition.InvalidatedData]> => {
 	const { courseId, data, userId } = options;
 
 	const validation = await Validators.CourseEdition.validateData(data);
@@ -36,7 +36,7 @@ export const create = async (
 
 	Data.Base.Cache.removeCache();
 
-	return [true, courseEdition];
+	return [true, courseEdition.toTableRow()];
 };
 
 export type UpdateOptions<TKeys extends keyof Validators.CourseEdition.DataToValidate> = {
@@ -49,7 +49,7 @@ export const update = async <TDataKeys extends keyof Validators.CourseEdition.Da
 ): Promise<[true, Models.CourseEdition] | [false, Validators.CourseEdition.InvalidatedData]> => {
 	const { id, data, userId } = options;
 
-	const courseEdition = await Data.CourseEdition.findOneOrThrow({ id });
+	const courseEdition = Models.CourseEdition.fromTableRow(await Data.CourseEdition.findOneOrThrow({ id }));
 	const validation = await Validators.CourseEdition.validateData(data);
 
 	if (!validation[0]) return validation;
@@ -94,9 +94,11 @@ export type RemoveCourseEditionOptions = {
 export const removeCourseEdition = async (options: RemoveCourseEditionOptions) => {
 	const { id, userId } = options;
 
-	const courseEdition = await Data.CourseEdition.findOneOrThrow({
-		id,
-	});
+	const courseEdition = Models.CourseEdition.fromTableRow(
+		await Data.CourseEdition.findOneOrThrow({
+			id,
+		})
+	);
 
 	await _removeCourseEdition({ courseEdition, userId });
 };
@@ -110,7 +112,11 @@ export const removeAllByCourseId = async ({ courseId, userId }: RemoveAllByCours
 
 	if (!courseEditions) return;
 
-	await Promise.all(courseEditions.map(courseEdition => _removeCourseEdition({ courseEdition, userId })));
+	await Promise.all(
+		courseEditions
+			.map(Models.CourseEdition.fromTableRow)
+			.map(courseEdition => _removeCourseEdition({ courseEdition, userId }))
+	);
 
 	Data.Base.Cache.removeCache();
 };

@@ -8,7 +8,7 @@ export type FindAllOptions = {
 	includeDeleted?: boolean;
 	includeDisabled?: boolean;
 };
-export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.Course[]>>({
+export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.CourseTableRow[]>>({
 	getCacheKey: options => `${!!options.includeDeleted}.${!!options.includeDisabled}`,
 	calculate: async (config, options) => {
 		const where: WhereOptions = {};
@@ -19,7 +19,7 @@ export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Model
 		if (!options.includeDisabled)
 			where[Models.CourseAttributes.visibility] = { [Op.eq]: Models.CourseVisibility.public };
 
-		return Models.Course.findAll({ where });
+		return Models.Course.findAll({ where }).then(courseClasses => courseClasses.map(cc => cc.toTableRow()));
 	},
 });
 
@@ -36,7 +36,7 @@ export type FindOneOptions = ({
 				id?: undefined;
 				code: string;
 		  });
-export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.Course | null>>({
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.CourseTableRow | null>>({
 	getCacheKey: options => `${options.id}.${options.code}.${!!options.includeDeleted}.${!!options.includeDisabled}`,
 	calculate: async (config, options) => {
 		const where: WhereOptions =
@@ -50,12 +50,14 @@ export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Model
 		if (!options.includeDisabled)
 			where[Models.CourseAttributes.visibility] = { [Op.eq]: Models.CourseVisibility.public };
 
-		return Models.Course.findOne({
+		const course = await Models.Course.findOne({
 			where,
 		});
+
+		return course && course.toTableRow();
 	},
 });
-export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.Course> => {
+export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.CourseTableRow> => {
 	const course = await findOne(options);
 
 	if (!course) throw new Errors.ObjectNotFoundError("El curso no existe");

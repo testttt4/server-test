@@ -1,21 +1,21 @@
+import * as Models from "../models";
+
 import { Field, Int, ObjectType } from "type-graphql";
 
-import { Nullable } from "../typings/helperTypes";
-
 @ObjectType()
-export class UserRole {
+export class UserRole implements Models.UserRoleTableRow {
 	@Field(() => Int)
-	public id: number;
+	public id: Models.UserRoleTableRow["id"];
 
-	@Field()
-	public name: string;
-
-	@Field(() => Date, { nullable: true })
-	public createdAt?: Nullable<Date>;
+	@Field(() => String)
+	public name: Models.UserRoleTableRow["name"];
 
 	@Field(() => Date, { nullable: true })
-	public updatedAt?: Nullable<Date>;
+	public createdAt: Models.UserRoleTableRow["createdAt"];
 
 	@Field(() => Date, { nullable: true })
-	public deletedAt?: Nullable<Date>;
+	public updatedAt: Models.UserRoleTableRow["updatedAt"];
+
+	@Field(() => Date, { nullable: true })
+	public deletedAt: Models.UserRoleTableRow["deletedAt"];
 }

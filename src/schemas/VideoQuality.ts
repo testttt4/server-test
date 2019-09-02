@@ -1,26 +1,29 @@
-import { GraphQLBoolean } from "graphql";
-import { Field, GraphQLISODateTime, Int, ObjectType } from "type-graphql";
+import * as Models from "../models";
+
+import { Field, Int, ObjectType } from "type-graphql";
 
 @ObjectType("VideoQuality")
-export class VideoQuality {
+export class VideoQuality implements Models.VideoQualityTableRow {
 	@Field(() => Int)
-	public id: number;
+	public id: Models.VideoQualityTableRow["id"];
 
 	@Field(() => Int, { nullable: true })
-	public height: number;
+	public height: Models.VideoQualityTableRow["height"];
 
 	@Field(() => Int, { nullable: true })
-	public width: number;
+	public width: Models.VideoQualityTableRow["width"];
 
-	@Field(() => GraphQLBoolean, { nullable: true })
-	public disabled: boolean;
+	@Field(() => Date, { nullable: true })
+	public createdAt: Models.VideoQualityTableRow["createdAt"];
 
-	@Field(() => GraphQLISODateTime)
-	public createdAt: Date;
+	@Field(() => Date, { nullable: true })
+	public updatedAt: Models.VideoQualityTableRow["updatedAt"];
 
-	@Field(() => GraphQLISODateTime, { nullable: true })
-	public updatedAt: Date;
+	@Field(() => Date, { nullable: true })
+	public deletedAt: Models.VideoQualityTableRow["updatedAt"];
 
-	@Field(() => GraphQLISODateTime, { nullable: true })
-	public deletedAt?: Date;
+	public videoId: Models.VideoQualityTableRow["videoId"];
+	public createdById: Models.VideoQualityTableRow["createdById"];
+	public deletedById: Models.VideoQualityTableRow["deletedById"];
+	public updatedById: Models.VideoQualityTableRow["updatedById"];
 }

@@ -18,7 +18,9 @@ export type CreateFromValidatedDataOptions = {
 		>
 	>;
 };
-export const createFromValidatedData = async (options: CreateFromValidatedDataOptions): Promise<Models.Video> => {
+export const createFromValidatedData = async (
+	options: CreateFromValidatedDataOptions
+): Promise<Models.VideoTableRow> => {
 	const video = await Models.Video.create(
 		identity<Required<Pick<Models.Video, keyof Omit<typeof Models.VideoAttributes, "id">>>>({
 			createdAt: moment().toDate(),
@@ -33,7 +35,7 @@ export const createFromValidatedData = async (options: CreateFromValidatedDataOp
 
 	Data.Base.Cache.removeCache();
 
-	return video;
+	return video.toTableRow();
 };
 
 export type CreateOptions = {
@@ -42,7 +44,7 @@ export type CreateOptions = {
 };
 export const create = async (
 	options: CreateOptions
-): Promise<[true, Models.Video] | [false, Validators.Video.InvalidatedData]> => {
+): Promise<[true, Models.VideoTableRow] | [false, Validators.Video.InvalidatedData]> => {
 	const validation = await Validators.Video.validateData(options.data);
 
 	if (!validation[0]) return validation;
@@ -66,7 +68,7 @@ export type RemoveVideoOptions = {
 	userId: number;
 };
 export const removeVideo = async ({ id, userId }: RemoveVideoOptions): Promise<void> => {
-	const video = await Data.Video.findOneOrThrow({ id });
+	const video = Models.Video.fromTableRow(await Data.Video.findOneOrThrow({ id }));
 
 	await _removeVideo({ video, userId });
 
@@ -80,7 +82,7 @@ export type RemoveAllVideosByCourseClassId = {
 export const removeAllVideosByCourseClassId = async ({ courseClassId, userId }: RemoveAllVideosByCourseClassId) => {
 	const videos = await Data.Video.findAll({ courseClassId });
 
-	await Promise.all(videos.map(video => _removeVideo({ video, userId })));
+	await Promise.all(videos.map(Models.Video.fromTableRow).map(video => _removeVideo({ video, userId })));
 
 	Data.Base.Cache.removeCache();
 };

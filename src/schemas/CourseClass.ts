@@ -1,26 +1,34 @@
-import { GraphQLBoolean } from "graphql";
+import * as Models from "../models";
+
 import { Field, GraphQLISODateTime, Int, ObjectType } from "type-graphql";
 
+import { GraphQLBoolean } from "graphql";
+
 @ObjectType("CourseClass")
-export class CourseClass {
+export class CourseClass implements Models.CourseClassTableRow {
 	@Field(() => Int)
-	public id: number;
+	public id: Models.CourseClassTableRow["id"];
 
 	@Field(() => Int, { nullable: true })
-	public number: number;
+	public number: Models.CourseClassTableRow["number"];
 
 	@Field(() => String, { nullable: true })
-	public title: string;
+	public title: Models.CourseClassTableRow["title"];
 
 	@Field(() => GraphQLBoolean, { nullable: true })
-	public disabled: boolean;
+	public disabled: Models.CourseClassTableRow["disabled"];
 
 	@Field(() => GraphQLISODateTime)
-	public createdAt: Date;
+	public createdAt: Models.CourseClassTableRow["createdAt"];
 
 	@Field(() => GraphQLISODateTime, { nullable: true })
-	public updatedAt: Date;
+	public updatedAt: Models.CourseClassTableRow["updatedAt"];
 
 	@Field(() => GraphQLISODateTime, { nullable: true })
-	public deletedAt?: Date;
+	public deletedAt: Models.CourseClassTableRow["deletedAt"];
+
+	public courseClassListId: Models.CourseClassTableRow["courseClassListId"];
+	public createdById: Models.CourseClassTableRow["createdById"];
+	public updatedById: Models.CourseClassTableRow["updatedById"];
+	public deletedById: Models.CourseClassTableRow["deletedById"];
 }

@@ -23,6 +23,7 @@ export const signUpFromValidatedData = async ({
 		createdAt: moment().toDate(),
 	});
 	await Models.UserUserRole.create({
+		// TODO: move
 		userRoleId: userRole[1].id,
 		userId: user.id,
 	});
@@ -53,7 +54,7 @@ export type SignInOptions = {
 	email: string;
 	password: string;
 };
-export const signIn = async (options: SignInOptions): Promise<{ user: Models.User; token: string }> => {
+export const signIn = async (options: SignInOptions): Promise<{ user: Models.UserTableRow; token: string }> => {
 	const { email, password } = options;
 
 	const signInData = await Validators.User.signIn({ email, password });
@@ -90,7 +91,7 @@ const _deleteUser = async ({ user }: { user: Models.User }) => {
 		}
 	);
 
-	return user.save();
+	await user.save();
 };
 
 export type DeleteUserOptions = {
@@ -98,7 +99,7 @@ export type DeleteUserOptions = {
 	userId: number;
 };
 export const deleteUser = async ({ id }: DeleteUserOptions) => {
-	const user = await Data.User.findOneOrThrow({ id });
+	const user = Models.User.fromTableRow(await Data.User.findOneOrThrow({ id }));
 
 	await _deleteUser({ user });
 

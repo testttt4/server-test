@@ -1,24 +1,27 @@
+import * as Models from "../models";
+
 import { Field, Int, ObjectType } from "type-graphql";
 
-import { Nullable } from "../typings/helperTypes";
-
 @ObjectType("User")
-export class User {
+export class User implements Models.UserTableRow {
 	@Field(() => Int)
-	public id: number;
+	public id: Models.UserTableRow["id"];
 
-	@Field()
-	public email: string;
+	@Field(() => String)
+	public email: Models.UserTableRow["email"];
 
-	@Field()
-	public name: string;
+	@Field(() => String)
+	public name: Models.UserTableRow["name"];
 
-	@Field(() => Date, { nullable: true })
-	public createdAt?: Nullable<Date>;
-
-	@Field(() => Date, { nullable: true })
-	public updatedAt?: Nullable<Date>;
+	@Field(() => String)
+	public uid: Models.UserTableRow["uid"];
 
 	@Field(() => Date, { nullable: true })
-	public deletedAt?: Nullable<Date>;
+	public createdAt: Models.UserTableRow["createdAt"];
+
+	@Field(() => Date, { nullable: true })
+	public updatedAt: Models.UserTableRow["updatedAt"];
+
+	@Field(() => Date, { nullable: true })
+	public deletedAt: Models.UserTableRow["deletedAt"];
 }

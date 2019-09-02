@@ -9,7 +9,7 @@ export type FindAllOptions = {
 	includeDeleted?: boolean;
 	includeDisabled?: boolean;
 };
-export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.CourseClass[]>>({
+export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.CourseClassTableRow[]>>({
 	getCacheKey: options => `${options.courseClassListId}.${!!options.includeDeleted}.${!!options.includeDisabled}`,
 	calculate: async (config, options) => {
 		const where: WhereOptions = {
@@ -22,11 +22,12 @@ export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Model
 		if (!options.includeDisabled) where[Models.CourseClassAttributes.disabled] = { [Op.or]: [null, false] };
 
 		const res = await Models.CourseClass.findAll({ where });
-		return res;
+
+		return res && res.map(cc => cc.toTableRow());
 	},
 });
 
-export const findAllLatest = getDataHandler<() => Promise<Models.CourseClass[]>>({
+export const findAllLatest = getDataHandler<() => Promise<Models.CourseClassTableRow[]>>({
 	getCacheKey: () => `updates`,
 	calculate: async () =>
 		Models.CourseClass.findAll({
@@ -66,7 +67,7 @@ export const findAllLatest = getDataHandler<() => Promise<Models.CourseClass[]>>
 					],
 				},
 			],
-		}),
+		}).then(courseClasses => courseClasses.map(cc => cc.toTableRow())),
 });
 
 export type FindOneOptions = {
@@ -85,7 +86,7 @@ export type FindOneOptions = {
 			courseClassListId: number;
 			number: number;
 	  });
-export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.CourseClass | null>>({
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.CourseClassTableRow | null>>({
 	getCacheKey: options =>
 		[!!options.includeDeleted, options.includeDisabled, options.id, options.courseClassListId, options.number].join(
 			"."
@@ -129,11 +130,11 @@ export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Model
 					],
 				},
 			],
-		});
+		}).then(c => c && c.toTableRow());
 	},
 });
 
-export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.CourseClass> => {
+export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.CourseClassTableRow> => {
 	const courseClass = await findOne(options);
 	if (!courseClass) throw new Errors.ObjectNotFoundError("La clase no existe");
 

@@ -20,7 +20,7 @@ export type CreateVideoFormatFromValidatedDataOptions = {
 };
 export const createFromValidatedData = async (
 	options: CreateVideoFormatFromValidatedDataOptions
-): Promise<Models.VideoFormat> => {
+): Promise<Models.VideoFormatTableRow> => {
 	const { data, videoQualityId } = options;
 
 	const videoFormat = await Models.VideoFormat.create(
@@ -38,7 +38,7 @@ export const createFromValidatedData = async (
 
 	Data.Base.Cache.removeCache();
 
-	return videoFormat;
+	return videoFormat.toTableRow();
 };
 
 export type CreateVideoFormatOptions = {
@@ -48,7 +48,7 @@ export type CreateVideoFormatOptions = {
 };
 export const create = async (
 	options: CreateVideoFormatOptions
-): Promise<[true, Models.VideoFormat] | [false, Validators.VideoFormat.InvalidatedData]> => {
+): Promise<[true, Models.VideoFormatTableRow] | [false, Validators.VideoFormat.InvalidatedData]> => {
 	const validation = await Validators.VideoFormat.validateData(options.data);
 	if (!validation[0]) return validation;
 
@@ -67,7 +67,7 @@ export type RemoveVideoFormatOptions = {
 	userId: number;
 };
 export const removeVideoFormat = async ({ id, userId }: RemoveVideoFormatOptions) => {
-	const videoFormat = await Data.VideoFormat.findOneOrThrow({ id });
+	const videoFormat = Models.VideoFormat.fromTableRow(await Data.VideoFormat.findOneOrThrow({ id }));
 
 	await _removeVideoFormat({ videoFormat, userId });
 
@@ -83,7 +83,11 @@ export const removeAllByVideoQualityId = async ({ videoQualityId, userId }: Remo
 		videoQualityId,
 	});
 
-	await Promise.all(videoFormats.map(videoFormat => _removeVideoFormat({ videoFormat, userId })));
+	await Promise.all(
+		videoFormats
+			.map(Models.VideoFormat.fromTableRow)
+			.map(videoFormat => _removeVideoFormat({ videoFormat, userId }))
+	);
 
 	Data.Base.Cache.removeCache();
 };

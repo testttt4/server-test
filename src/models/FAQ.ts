@@ -2,6 +2,7 @@ import { AutoIncrement, BelongsTo, Column, DataType, ForeignKey, Model, PrimaryK
 
 import { Nullable } from "../typings/helperTypes";
 import { User } from "./internal";
+import { pick } from "../utils/Helper";
 
 export const FAQAttributes: {
 	[K in keyof Required<
@@ -32,6 +33,8 @@ export const FAQAttributes: {
 	deletedById: "deletedById",
 };
 
+export type FAQTableRow = Pick<FAQ, keyof typeof FAQAttributes>;
+
 export const FAQRelations: {
 	[K in keyof Required<Pick<FAQ, "createdBy" | "updatedBy" | "deletedBy">>]: K;
 } = {
@@ -42,6 +45,10 @@ export const FAQRelations: {
 
 @Table({ modelName: "FAQ" })
 export class FAQ extends Model<FAQ> {
+	public static fromTableRow(data: FAQTableRow): FAQ {
+		return new FAQ(data);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.INTEGER)
@@ -57,7 +64,7 @@ export class FAQ extends Model<FAQ> {
 	public isHTML: boolean;
 
 	@Column(DataType.DATE)
-	public createdAt?: Nullable<Date>;
+	public createdAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -67,7 +74,7 @@ export class FAQ extends Model<FAQ> {
 	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public updatedAt?: Nullable<Date>;
+	public updatedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -77,7 +84,7 @@ export class FAQ extends Model<FAQ> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date>;
+	public deletedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -85,4 +92,6 @@ export class FAQ extends Model<FAQ> {
 
 	@BelongsTo(() => User, FAQAttributes.deletedById)
 	public deletedBy: Nullable<User>;
+
+	public toTableRow = () => pick(this, Object.keys(FAQAttributes) as Array<keyof typeof FAQAttributes>);
 }

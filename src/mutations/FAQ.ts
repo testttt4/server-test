@@ -17,7 +17,7 @@ export type CreateFromValidatedDataOptions = {
 		>
 	>;
 };
-export const createFromValidatedData = async (options: CreateFromValidatedDataOptions): Promise<Models.FAQ> => {
+export const createFromValidatedData = async (options: CreateFromValidatedDataOptions): Promise<Models.FAQTableRow> => {
 	const faq = await Models.FAQ.create(
 		identity<Required<Pick<Models.FAQ, keyof Omit<typeof Models.FAQAttributes, "id">>>>({
 			createdAt: moment().toDate(),
@@ -32,7 +32,7 @@ export const createFromValidatedData = async (options: CreateFromValidatedDataOp
 
 	Data.Base.Cache.removeCache();
 
-	return faq;
+	return faq.toTableRow();
 };
 
 export type CreateOptions = {
@@ -41,7 +41,7 @@ export type CreateOptions = {
 };
 export const create = async (
 	options: CreateOptions
-): Promise<[true, Models.FAQ] | [false, Validators.FAQ.InvalidatedData]> => {
+): Promise<[true, Models.FAQTableRow] | [false, Validators.FAQ.InvalidatedData]> => {
 	const validation = await Validators.FAQ.validateData(options.data);
 
 	if (!validation[0]) return validation;
@@ -66,12 +66,14 @@ export type UpdateFromValidatedDataOptions = {
 };
 export const updateFromValidatedData = async <TDataKeys extends keyof Validators.FAQ.DataToValidate>(
 	options: UpdateFromValidatedDataOptions
-): Promise<Models.FAQ> => {
+): Promise<Models.FAQTableRow> => {
 	const { id, data, userId } = options;
 
-	const faq = await Data.FAQ.findOneOrThrow({
-		id,
-	});
+	const faq = Models.FAQ.fromTableRow(
+		await Data.FAQ.findOneOrThrow({
+			id,
+		})
+	);
 
 	const updateData: Partial<Pick<Models.FAQ, keyof typeof Models.FAQAttributes>> = {
 		updatedAt: moment().toDate(),
@@ -87,7 +89,7 @@ export const updateFromValidatedData = async <TDataKeys extends keyof Validators
 
 	Data.Base.Cache.removeCache();
 
-	return faq;
+	return faq.toTableRow();
 };
 
 export type UpdateOptions<TDataKeys extends keyof Validators.FAQ.DataToValidate> = {
@@ -97,7 +99,7 @@ export type UpdateOptions<TDataKeys extends keyof Validators.FAQ.DataToValidate>
 };
 export const update = async <TDataKeys extends keyof Validators.FAQ.DataToValidate>(
 	options: UpdateOptions<TDataKeys>
-): Promise<[true, Models.FAQ] | [false, Validators.FAQ.InvalidatedData<TDataKeys>]> => {
+): Promise<[true, Models.FAQTableRow] | [false, Validators.FAQ.InvalidatedData<TDataKeys>]> => {
 	const validation = await Validators.FAQ.validateData(options.data);
 
 	if (!validation[0]) return validation;
@@ -118,7 +120,7 @@ export type DeleteFAQOptions = {
 };
 export const deleteFAQ = async (options: DeleteFAQOptions) => {
 	const { id, userId } = options;
-	const faq = await Data.FAQ.findOneOrThrow({ id });
+	const faq = Models.FAQ.fromTableRow(await Data.FAQ.findOneOrThrow({ id }));
 
 	await _deleteFAQ({ faq, userId });
 

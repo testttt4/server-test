@@ -1,22 +1,27 @@
-import { Field, GraphQLISODateTime, Int, ObjectType } from "type-graphql";
+import * as Models from "../models";
+
+import { Field, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
-export class Video {
+export class Video implements Models.VideoTableRow {
 	@Field(() => Int)
-	public id: number;
+	public id: Models.VideoTableRow["id"];
 
 	@Field(() => String, { nullable: true })
-	public name: string;
+	public name: Models.VideoTableRow["name"];
 
-	@Field(() => Int, { nullable: true })
-	public position: number;
+	@Field(() => Date, { nullable: true })
+	public createdAt: Models.VideoTableRow["createdAt"];
 
-	@Field(() => GraphQLISODateTime)
-	public createdAt: Date;
+	@Field(() => Date, { nullable: true })
+	public updatedAt: Models.VideoTableRow["updatedAt"];
 
-	@Field(() => GraphQLISODateTime, { nullable: true })
-	public updatedAt: Date;
+	@Field(() => Date, { nullable: true })
+	public deletedAt: Models.VideoTableRow["updatedAt"];
 
-	@Field(() => GraphQLISODateTime, { nullable: true })
-	public deletedAt?: Date;
+	public courseClassId: Models.VideoTableRow["courseClassId"];
+	public position: Models.VideoTableRow["position"];
+	public createdById: Models.VideoTableRow["createdById"];
+	public deletedById: Models.VideoTableRow["deletedById"];
+	public updatedById: Models.VideoTableRow["updatedById"];
 }

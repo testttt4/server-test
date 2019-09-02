@@ -22,7 +22,9 @@ export type CreateFromValidatedDataOptions = {
 		>
 	>;
 };
-export const createFromValidatedData = async (options: CreateFromValidatedDataOptions): Promise<Models.Course> => {
+export const createFromValidatedData = async (
+	options: CreateFromValidatedDataOptions
+): Promise<Models.CourseTableRow> => {
 	const course = new Models.Course(
 		identity<Required<Pick<Models.Course, keyof Omit<typeof Models.CourseAttributes, "id">>>>({
 			createdAt: moment().toDate(),
@@ -35,9 +37,11 @@ export const createFromValidatedData = async (options: CreateFromValidatedDataOp
 		})
 	);
 
+	await course.save();
+
 	Data.Base.Cache.removeCache();
 
-	return course;
+	return course.toTableRow();
 };
 
 export type CreateOptions = {
@@ -47,7 +51,7 @@ export type CreateOptions = {
 export const create = async ({
 	data,
 	userId,
-}: CreateOptions): Promise<[true, Models.Course] | [false, Validators.Course.InvalidatedData]> => {
+}: CreateOptions): Promise<[true, Models.CourseTableRow] | [false, Validators.Course.InvalidatedData]> => {
 	const dataValidation = await Validators.Course.validateData(data);
 
 	if (!dataValidation[0]) return dataValidation;
@@ -75,9 +79,9 @@ export const update = async <TDataKeys extends keyof Validators.Course.DataToVal
 	data,
 	userId,
 }: UpdateOptions<TDataKeys>): Promise<
-	[true, Models.Course] | [false, Pick<Validators.Course.InvalidatedData<TDataKeys>, TDataKeys>]
+	[true, Models.CourseTableRow] | [false, Pick<Validators.Course.InvalidatedData<TDataKeys>, TDataKeys>]
 > => {
-	const course = await Data.Course.findOneOrThrow({ id, includeDisabled: true });
+	const course = Models.Course.fromTableRow(await Data.Course.findOneOrThrow({ id, includeDisabled: true }));
 	const prevIconURL = course.iconURL;
 	let prevIconPath: string | undefined;
 
@@ -94,14 +98,14 @@ export const update = async <TDataKeys extends keyof Validators.Course.DataToVal
 
 	const { icon, ...dataValidationRest } = dataValidation[1];
 
-	const updateData: Partial<Pick<Models.Course, keyof typeof Models.CourseAttributes>> = {
+	const updateData: Partial<Models.CourseTableRow> = {
 		iconURL: (icon && icon.iconUrl) || undefined,
 		updatedAt: moment().toDate(),
 		updatedById: userId,
 	};
 
 	await course.update(
-		identity<Partial<Pick<Models.Course, keyof typeof Models.CourseAttributes>>>({
+		identity<Partial<Models.CourseTableRow>>({
 			...updateData,
 			...dataValidationRest,
 		})
@@ -112,7 +116,7 @@ export const update = async <TDataKeys extends keyof Validators.Course.DataToVal
 
 	Data.Base.Cache.removeCache();
 
-	return [true, course];
+	return [true, course.toTableRow()];
 };
 
 export type RemoveOptions = {
@@ -120,7 +124,7 @@ export type RemoveOptions = {
 	userId: number;
 };
 export const remove = async ({ id, userId }: RemoveOptions): Promise<boolean> => {
-	const course = await Data.Course.findOneOrThrow({ id, includeDisabled: true });
+	const course = Models.Course.fromTableRow(await Data.Course.findOneOrThrow({ id, includeDisabled: true }));
 
 	course.deletedById = userId;
 	course.deletedAt = moment().toDate();

@@ -16,7 +16,7 @@ export type FindOneOptions = {
 			id?: undefined;
 			uid: string;
 	  });
-export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.User | null>>({
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.UserTableRow | null>>({
 	getCacheKey: options => [options.id, options.includeDeleted].join("."),
 	calculate: async (config, options) => {
 		const where: WhereOptions =
@@ -29,11 +29,11 @@ export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Model
 
 		return Models.User.findOne({
 			where,
-		});
+		}).then(u => u && u.toTableRow());
 	},
 });
 
-export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.User> => {
+export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.UserTableRow> => {
 	const result = await findOne(options);
 	if (!result) throw new Errors.ObjectNotFoundError("El usuario existe");
 

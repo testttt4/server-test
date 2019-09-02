@@ -22,6 +22,7 @@ import {
 } from "./internal";
 
 import { Nullable } from "../typings/helperTypes";
+import { pick } from "../utils/Helper";
 
 export const UserAttributes: {
 	[K in keyof Required<Pick<User, "id" | "email" | "uid" | "name" | "createdAt" | "updatedAt" | "deletedAt">>]: K;
@@ -34,6 +35,8 @@ export const UserAttributes: {
 	updatedAt: "updatedAt",
 	deletedAt: "deletedAt",
 };
+
+export type UserTableRow = Pick<User, keyof typeof UserAttributes>;
 
 export const UserRelations: {
 	[K in keyof Required<
@@ -90,6 +93,10 @@ export const UserRelations: {
 
 @Table({ modelName: "User" })
 export class User extends Model<User> {
+	public static fromTableRow(data: UserTableRow): User {
+		return new User(data);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.INTEGER)
@@ -180,11 +187,13 @@ export class User extends Model<User> {
 	public deletedVideoQualities: VideoQuality[];
 
 	@Column(DataType.DATE)
-	public createdAt?: Nullable<Date>;
+	public createdAt: Nullable<Date>;
 
 	@Column(DataType.DATE)
-	public updatedAt?: Nullable<Date>;
+	public updatedAt: Nullable<Date>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date>;
+	public deletedAt: Nullable<Date>;
+
+	public toTableRow = () => pick(this, Object.keys(UserAttributes) as Array<keyof typeof UserAttributes>);
 }

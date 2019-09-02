@@ -12,6 +12,7 @@ import {
 import { CourseClassList, User, Video } from "./internal";
 
 import { Nullable } from "../typings/helperTypes";
+import { pick } from "../utils/Helper";
 
 export const CourseClassAttributes: {
 	[K in keyof Required<
@@ -44,6 +45,8 @@ export const CourseClassAttributes: {
 	deletedById: "deletedById",
 };
 
+export type CourseClassTableRow = Pick<CourseClass, keyof typeof CourseClassAttributes>;
+
 export const CourseClassRelations: {
 	[K in keyof Required<Pick<CourseClass, "courseClassList" | "videos" | "createdBy" | "updatedBy" | "deletedBy">>]: K;
 } = {
@@ -56,6 +59,10 @@ export const CourseClassRelations: {
 
 @Table({ modelName: "CourseClass" })
 export class CourseClass extends Model<CourseClass> {
+	public static fromTableRow(data: CourseClassTableRow): CourseClass {
+		return new CourseClass(data);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.SMALLINT)
@@ -81,7 +88,7 @@ export class CourseClass extends Model<CourseClass> {
 	public videos: Video[];
 
 	@Column(DataType.DATE)
-	public createdAt?: Nullable<Date>;
+	public createdAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -91,7 +98,7 @@ export class CourseClass extends Model<CourseClass> {
 	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public updatedAt?: Nullable<Date>;
+	public updatedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -101,7 +108,7 @@ export class CourseClass extends Model<CourseClass> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date>;
+	public deletedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -109,4 +116,7 @@ export class CourseClass extends Model<CourseClass> {
 
 	@BelongsTo(() => User, CourseClassAttributes.deletedById)
 	public deletedBy: Nullable<User>;
+
+	public toTableRow = () =>
+		pick(this, Object.keys(CourseClassAttributes) as Array<keyof typeof CourseClassAttributes>);
 }

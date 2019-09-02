@@ -3,6 +3,7 @@ import { AutoIncrement, BelongsTo, Column, DataType, ForeignKey, PrimaryKey, Tab
 import { BaseModel } from "./BaseModel";
 import { Nullable } from "../typings/helperTypes";
 import { User } from "./internal";
+import { pick } from "../utils/Helper";
 
 export const CourseVisibility: { [K in "public" | "hidden" | "disabled"]: K } = {
 	public: "public",
@@ -43,6 +44,8 @@ export const CourseAttributes: {
 	deletedById: "deletedById",
 };
 
+export type CourseTableRow = Pick<Course, keyof typeof CourseAttributes>;
+
 export const CourseRelations: {
 	[K in keyof Required<Pick<Course, "createdBy" | "updatedBy" | "deletedBy">>]: K;
 } = {
@@ -53,8 +56,8 @@ export const CourseRelations: {
 
 @Table({ modelName: "Course" })
 export class Course extends BaseModel<Course> {
-	public static getAttributeName(attribute: keyof typeof CourseAttributes): string {
-		return super.getAttributeName(attribute, this);
+	public static fromTableRow(data: CourseTableRow): Course {
+		return new Course(data);
 	}
 
 	@PrimaryKey
@@ -72,13 +75,13 @@ export class Course extends BaseModel<Course> {
 	public code: string;
 
 	@Column({ type: DataType.STRING })
-	public iconURL?: Nullable<string>;
+	public iconURL: Nullable<string>;
 
 	@Column({ type: DataType.STRING })
-	public eva?: Nullable<string>;
+	public eva: Nullable<string>;
 
 	@Column(DataType.DATE)
-	public createdAt?: Nullable<Date>;
+	public createdAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -88,7 +91,7 @@ export class Course extends BaseModel<Course> {
 	public createdBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public updatedAt?: Nullable<Date>;
+	public updatedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -98,7 +101,7 @@ export class Course extends BaseModel<Course> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date>;
+	public deletedAt: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)
@@ -106,4 +109,6 @@ export class Course extends BaseModel<Course> {
 
 	@BelongsTo(() => User, CourseAttributes.deletedById)
 	public deletedBy: Nullable<User>;
+
+	public toTableRow = () => pick(this, Object.keys(CourseAttributes) as Array<keyof typeof CourseAttributes>);
 }

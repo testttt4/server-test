@@ -9,7 +9,7 @@ export type FindAllOptions = {
 	courseClassId: number;
 	includeDeleted?: boolean | undefined;
 };
-export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.Video[]>>({
+export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Models.VideoTableRow[]>>({
 	getCacheKey: options => [options.courseClassId, !!options.includeDeleted].join("."),
 	calculate: async (config, options) => {
 		const where: WhereOptions = {
@@ -22,7 +22,7 @@ export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Model
 		return Models.Video.findAll({
 			where,
 			order: [[Models.VideoAttributes.position, "ASC"]],
-		});
+		}).then(videos => videos.map(v => v.toTableRow()));
 	},
 });
 
@@ -30,7 +30,7 @@ export type FindOneOptions = {
 	id: number;
 	includeDeleted?: boolean;
 };
-export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.Video | null>>({
+export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.VideoTableRow | null>>({
 	getCacheKey: options => [options.id, !!options.includeDeleted].join("."),
 	calculate: async (config, options) => {
 		const where: WhereOptions = {
@@ -42,11 +42,11 @@ export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Model
 
 		return Models.Video.findOne({
 			where,
-		});
+		}).then(v => v && v.toTableRow());
 	},
 });
 
-export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.Video> => {
+export const findOneOrThrow = async (options: FindOneOptions): Promise<Models.VideoTableRow> => {
 	const video = await findOne(options);
 	if (!video) throw new Errors.ObjectNotFoundError("El video no existe.");
 
