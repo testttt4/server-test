@@ -4,8 +4,6 @@ import * as Models from "../models";
 
 import { validateNumber, validateString } from "./Base";
 
-import { Nullable } from "../typings/helperTypes";
-
 export const validateTitle = (title: string): [true, string] | [false, Errors.BadUserInput[]] => {
 	title = title.trim();
 	const errors = validateString({ value: title, notEmpty: true, max: 255 });
@@ -13,133 +11,106 @@ export const validateTitle = (title: string): [true, string] | [false, Errors.Ba
 	return errors.length > 0 ? [false, errors] : [true, title];
 };
 
-export type ValidateNumberOptions = {
+export type ValidateCourseClassNumberOptions = {
 	courseClassNumber: number;
-	courseClassListId: number;
+	courseClassListId: number | undefined;
 };
 export const validateCourseClassNumber = async (
-	options: ValidateNumberOptions
+	options: ValidateCourseClassNumberOptions
 ): Promise<[true, number] | [false, Errors.BadUserInput[]]> => {
 	const { courseClassNumber, courseClassListId } = options;
 
 	const errors = validateNumber({ value: courseClassNumber, min: 0, max: 10000 });
 
-	const classWithSameNumber: undefined | Models.CourseClass = await Data.CourseClass.findOne({
-		courseClassListId,
-		number: courseClassNumber,
-	});
-
-	if (classWithSameNumber)
-		errors.push({
-			code: "INVALID_VALUE",
-			message: `Ya existe una clase con número ${courseClassNumber} en la lista.`,
+	if (courseClassListId) {
+		const classWithSameNumber = await Data.CourseClass.findOne({
+			courseClassListId,
+			number: courseClassNumber,
+			includeDisabled: true,
 		});
+
+		if (classWithSameNumber)
+			errors.push({
+				code: "INVALID_VALUE",
+				message: `Ya existe una clase con número ${courseClassNumber} en la lista.`,
+			});
+	}
 
 	return errors.length > 0 ? [false, errors] : [true, courseClassNumber];
 };
 
-export type CreateData = {
-	courseClassListId: number;
-	number: number;
-	title: string;
-	disabled?: Nullable<boolean>;
-};
-export type ValidateDataOptions = {
-	data: CreateData;
-};
-export type ValidatedCreateData = {
-	courseClassListId: number;
-	number: number;
-	title: string;
-	disabled: boolean;
-};
-export type InvalidatedCreateData = Partial<
-	Record<
-		keyof Pick<CreateData, "courseClassListId" | "number" | "title" | "disabled">,
-		Errors.BadUserInput | Errors.BadUserInput[]
+export type DataToValidate = Required<
+	Pick<
+		Models.CourseClass,
+		keyof Pick<typeof Models.CourseClassAttributes, "number" | "title" | "disabled" | "courseClassListId">
 	>
 >;
-export const validateData = async ({
-	data,
-}: ValidateDataOptions): Promise<[true, ValidatedCreateData] | [false, InvalidatedCreateData]> => {
-	const errors: InvalidatedCreateData = {};
-
-	const courseClassListId = data.courseClassListId;
-	if (!(await Data.CourseClassList.findOne({ id: courseClassListId })))
-		errors.courseClassListId = { code: "INVALID_VALUE" };
-
-	let title = "";
-	const titleValidation = validateTitle(data.title);
-	if (titleValidation[0]) title = titleValidation[1];
-	else errors.title = titleValidation[1];
-
-	let number = 0;
-	const courseClassNumberValidation = await validateCourseClassNumber({
-		courseClassNumber: data.number,
-		courseClassListId: data.courseClassListId,
-	});
-	if (courseClassNumberValidation[0]) number = courseClassNumberValidation[1];
-	else errors.number = courseClassNumberValidation[1];
-
-	const disabled = typeof data.disabled === "boolean" && data.disabled;
-
-	return Object.keys(errors).length > 0
-		? [false, errors]
-		: [
-				true,
-				{
-					courseClassListId,
-					title,
-					number,
-					disabled,
-				},
-		  ];
-};
-
-export type UpdateData = {
-	id: number;
-	number?: Nullable<number>;
-	title?: Nullable<string>;
-	disabled?: Nullable<boolean>;
-};
-export type ValidatedUpdateData = {
-	id: number;
-	number?: number;
-	title?: string;
-	disabled?: boolean;
-};
-export type InvalidatedUpdateData = Partial<
-	Record<keyof Pick<UpdateData, "number" | "title">, Errors.BadUserInput | Errors.BadUserInput[]>
+export type InvalidatedData<TKeys extends keyof DataToValidate = keyof DataToValidate> = Partial<
+	Record<TKeys, Errors.BadUserInput[]>
 >;
-export const validateUpdateData = async (
-	data: UpdateData
-): Promise<[true, ValidatedUpdateData] | [false, InvalidatedUpdateData]> => {
-	const validatedData: ValidatedUpdateData = {
-		id: data.id,
+export type ValidatedData<TKeys extends keyof DataToValidate = keyof DataToValidate> = Pick<DataToValidate, TKeys>;
+export const validateData = async <TKeys extends keyof DataToValidate>(
+	data: Pick<DataToValidate, TKeys>
+): Promise<[true, ValidatedData<TKeys>] | [false, InvalidatedData<TKeys>]> => {
+	const validatedData: ValidatedData = {} as any;
+	const errors: InvalidatedData = {} as any;
+
+	const getDataProperty = <TKey extends keyof DataToValidate>(key: TKey): DataToValidate[TKey] | undefined =>
+		(data as DataToValidate)[key] || undefined;
+
+	const validators: Record<keyof DataToValidate, () => Promise<void> | void> = {
+		number: async () => {
+			const number = getDataProperty("number");
+			const courseClassListId = getDataProperty("courseClassListId");
+
+			if (number === undefined) return;
+
+			const numberValidation = await validateCourseClassNumber({ courseClassListId, courseClassNumber: number });
+
+			if (numberValidation[0]) validatedData.number = numberValidation[1];
+			else errors.number = numberValidation[1];
+		},
+		title: async () => {
+			const title = getDataProperty("title");
+
+			if (title === undefined) return;
+
+			const titleValidation = await validateTitle(title);
+
+			if (titleValidation[0]) validatedData.title = titleValidation[1];
+			else errors.title = titleValidation[1];
+		},
+		disabled: () => {
+			const disabled = getDataProperty("disabled");
+
+			if (disabled === undefined) return;
+
+			validatedData.disabled = disabled;
+		},
+		courseClassListId: async () => {
+			const courseClassListId = getDataProperty("courseClassListId");
+
+			if (courseClassListId === undefined) return;
+
+			const courseClassList = await Data.CourseClassList.findOne({
+				id: courseClassListId,
+				includeDisabled: true,
+			});
+
+			if (!courseClassList) {
+				errors.courseClassListId = [
+					{
+						code: "INVALID_VALUE",
+						message: `No se encontró una lista de clases con el id ${courseClassListId}`,
+					},
+				];
+			} else validatedData.courseClassListId = courseClassListId;
+		},
 	};
-	const errors: InvalidatedUpdateData = {};
 
-	const courseClass = await Data.CourseClass.findOneOrThrow({ id: data.id, includeDisabled: true });
-	const courseClassList = await Data.CourseClassList.findOneOrThrow({
-		id: courseClass.courseClassListId,
-	});
+	for (const key of Object.keys(validators) as Array<keyof DataToValidate>) await validators[key]();
 
-	if (data.number !== undefined && data.number !== null && data.number !== courseClass.number) {
-		const courseClassNumberValidation = await validateCourseClassNumber({
-			courseClassNumber: data.number,
-			courseClassListId: courseClassList.id,
-		});
+	const hasErrors = Object.keys(errors).length > 0;
 
-		if (courseClassNumberValidation[0]) validatedData.number = courseClassNumberValidation[1];
-		else errors.number = courseClassNumberValidation[1];
-	} else validatedData.number = undefined;
-
-	if (data.title !== undefined && data.title !== null) {
-		const titleValidation = validateTitle(data.title);
-
-		if (titleValidation[0]) validatedData.title = titleValidation[1];
-		else errors.title = titleValidation[1];
-	} else validatedData.title = undefined;
-
-	return Object.values(errors).length > 0 ? [false, errors] : [true, validatedData];
+	return hasErrors ? [false, errors as any] : [true, validatedData as any];
 };

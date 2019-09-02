@@ -13,7 +13,7 @@ import { Course, CourseClassList, User } from "./internal";
 
 import { Nullable } from "../typings/helperTypes";
 
-export const CourseEditionStatus: { [K in "public" | "hidden" | "disabled"]: K } = {
+export const CourseEditionVisibility: { [K in "public" | "hidden" | "disabled"]: K } = {
 	public: "public",
 	disabled: "disabled",
 	hidden: "hidden",
@@ -28,7 +28,7 @@ export const CourseEditionAttributes: {
 			| "name"
 			| "semester"
 			| "year"
-			| "status"
+			| "visibility"
 			| "createdAt"
 			| "createdById"
 			| "updatedAt"
@@ -43,7 +43,7 @@ export const CourseEditionAttributes: {
 	name: "name",
 	semester: "semester",
 	year: "year",
-	status: "status",
+	visibility: "visibility",
 	createdAt: "createdAt",
 	createdById: "createdById",
 	updatedAt: "updatedAt",
@@ -91,7 +91,7 @@ export class CourseEdition extends Model<CourseEdition> {
 	public year: number;
 
 	@Column({ type: DataType.STRING })
-	public status: keyof typeof CourseEditionStatus;
+	public visibility: keyof typeof CourseEditionVisibility;
 
 	@Column(DataType.DATE)
 	public createdAt?: Nullable<Date>;
@@ -114,7 +114,7 @@ export class CourseEdition extends Model<CourseEdition> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date | string>;
+	public deletedAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)

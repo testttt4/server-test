@@ -1,16 +1,8 @@
+import { Field, FieldResolver, InputType, Int, Resolver, Root } from "type-graphql";
 import * as Data from "../data";
-import * as Errors from "../errors";
 import * as Models from "../models";
-import * as Mutations from "../mutations";
 import * as Schemas from "../schemas";
-
-import { Arg, Ctx, Field, FieldResolver, Info, InputType, Int, Mutation, Resolver, Root } from "type-graphql";
-import { GraphQLBoolean, GraphQLResolveInfo } from "graphql";
-
-import { Authenticated } from "../middlewares";
-import { Context } from "../Context";
 import { Nullable } from "../typings/helperTypes";
-import { UserRoleName } from "./User";
 
 @InputType()
 export class CreateCourseClassListInput {
@@ -36,107 +28,85 @@ export class UpdateCourseClassListInput {
 @Resolver(() => Schemas.CourseClassList)
 export class CourseClassList {
 	//#region Mutations
-	@Mutation(() => Schemas.CourseClassList)
-	@Authenticated([UserRoleName.Admin])
-	public async createCourseClassList(
-		@Arg("data", () => CreateCourseClassListInput) data: CreateCourseClassListInput,
-		@Ctx() context: Context
-	): Promise<Models.CourseClassList> {
-		const result = await Mutations.CourseClassList.create({
-			data,
-			userId: context.me!.id,
-		});
+	// @Mutation(() => Schemas.CourseClassList)
+	// @Authenticated([UserRoleName.Admin])
+	// public async createCourseClassList(
+	// 	@Arg("data", () => CreateCourseClassListInput) data: CreateCourseClassListInput,
+	// 	@Ctx() context: Context
+	// ): Promise<Models.CourseClassList> {
+	// 	const result = await Mutations.CourseClassList.create({
+	// 		data,
+	// 		userId: context.me!.id,
+	// 	});
 
-		if (!result[0]) throw Errors.BadUserInputError(result[1]);
+	// 	if (!result[0]) throw Errors.BadUserInputError(result[1]);
 
-		return result[1];
-	}
+	// 	return result[1];
+	// }
 
-	@Mutation(() => Schemas.CourseClassList)
-	@Authenticated([UserRoleName.Admin])
-	public async updateCourseClassList(
-		@Arg("id", () => Int) id: number,
-		@Arg("data", () => UpdateCourseClassListInput) data: UpdateCourseClassListInput,
-		@Ctx() context: Context
-	): Promise<Models.CourseClassList> {
-		const result = await Mutations.CourseClassList.update({
-			id,
-			data,
-			userId: context.me!.id,
-		});
+	// @Mutation(() => Schemas.CourseClassList)
+	// @Authenticated([UserRoleName.Admin])
+	// public async updateCourseClassList(
+	// 	@Arg("id", () => Int) id: number,
+	// 	@Arg("data", () => UpdateCourseClassListInput) data: UpdateCourseClassListInput,
+	// 	@Ctx() context: Context
+	// ): Promise<Models.CourseClassList> {
+	// 	const result = await Mutations.CourseClassList.update({
+	// 		id,
+	// 		data,
+	// 		userId: context.me!.id,
+	// 	});
 
-		if (!result[0]) throw Errors.BadUserInputError(result[1]);
+	// 	if (!result[0]) throw Errors.BadUserInputError(result[1]);
 
-		return result[1];
-	}
+	// 	return result[1];
+	// }
 
-	@Mutation(() => GraphQLBoolean)
-	@Authenticated([Models.UserRoleName.Admin])
-	public async deleteCourseClassList(@Arg("id", () => Int) id: number, @Ctx() context: Context): Promise<boolean> {
-		await Mutations.CourseClassList.deleteCourseClassList({ id, userId: context.me!.id });
+	// @Mutation(() => GraphQLBoolean)
+	// @Authenticated([Models.UserRoleName.Admin])
+	// public async deleteCourseClassList(@Arg("id", () => Int) id: number, @Ctx() context: Context): Promise<boolean> {
+	// 	await Mutations.CourseClassList.deleteCourseClassList({ id, userId: context.me!.id });
 
-		return true;
-	}
+	// 	return true;
+	// }
 	//#endregion
 
 	//#region FieldResolvers
 	@FieldResolver(() => [Schemas.CourseClass], { nullable: true })
-	public async classes(
-		@Root() courseClassList: { id?: number },
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.CourseClass[]> {
+	public async classes(@Root() courseClassList: Models.CourseClassList): Promise<Models.CourseClass[]> {
 		if (typeof courseClassList.id !== "number") return [];
 
 		return Data.CourseClass.findAll({ courseClassListId: courseClassList.id });
 	}
 
-	@FieldResolver(() => Schemas.Course, { nullable: true })
-	public async course(
-		@Root() root: Models.CourseClassList,
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.Course | null> {
-		if (!root.courseId) return null;
+	@FieldResolver(() => Schemas.CourseEdition, { nullable: true })
+	public async courseEdition(@Root() root: Models.CourseClassList): Promise<Models.CourseEdition | null> {
+		if (!root.courseEditionId) return null;
 
-		return (
-			(await Data.Course.findOne({
-				id: root.courseId,
-			})) || null
-		);
+		return Data.CourseEdition.findOne({
+			id: root.courseEditionId,
+		});
 	}
 
 	@FieldResolver(() => Schemas.User, { nullable: true })
-	public async createdBy(
-		@Root() course: { createdBy?: number },
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.User | null> {
-		if (!course.createdBy) return null;
+	public async createdBy(@Root() courseclasslist: Models.CourseClassList): Promise<Models.User | null> {
+		if (typeof courseclasslist.createdById !== "number") return null;
 
-		return (await Data.User.findOne({ id: course.createdBy })) || null;
+		return Data.User.findOne({ id: courseclasslist.createdById });
 	}
 
 	@FieldResolver(() => Schemas.User, { nullable: true })
-	public async updatedBy(
-		@Root() course: { updatedBy?: number },
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.User | null> {
-		if (!course.updatedBy) return null;
+	public async updatedBy(@Root() courseclasslist: Models.CourseClassList): Promise<Models.User | null> {
+		if (typeof courseclasslist.updatedById !== "number") return null;
 
-		return (await Data.User.findOne({ id: course.updatedBy })) || null;
+		return Data.User.findOne({ id: courseclasslist.updatedById });
 	}
 
 	@FieldResolver(() => Schemas.User, { nullable: true })
-	public async deletedBy(
-		@Root() course: { deletedBy?: number },
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.User | null> {
-		if (!course.deletedBy) return null;
+	public async deletedBy(@Root() courseclasslist: Models.CourseClassList): Promise<Models.User | null> {
+		if (typeof courseclasslist.deletedById !== "number") return null;
 
-		return (await Data.User.findOne({ id: course.deletedBy })) || null;
+		return Data.User.findOne({ id: courseclasslist.deletedById });
 	}
 	//#endregion
 }

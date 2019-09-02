@@ -5,7 +5,6 @@ import * as Models from "../models";
 import { validateNumber, validateString } from "./Base";
 
 import { FileUpload } from "graphql-upload";
-import { Nullable } from "../typings/helperTypes";
 import path from "path";
 import { saveFile } from "../utils/Helper";
 import { serverConfig } from "../serverConfig";
@@ -21,21 +20,21 @@ export const validateCode = async (code: string): Promise<[true, string] | [fals
 	return errors.length > 0 ? [false, errors] : [true, code];
 };
 
-export const validateName = (name: string): [true, string] | [false, Errors.BadUserInput] => {
+export const validateName = (name: string): [true, string] | [false, Errors.BadUserInput[]] => {
 	name = name.trim();
 	const errors: Errors.BadUserInput[] = validateString({ value: name, notEmpty: true, max: 255 });
 
-	return errors.length > 0 ? [false, errors[0]] : [true, name];
+	return errors.length > 0 ? [false, errors] : [true, name];
 };
 
-export const validateEva = (eva: string): [true, string] | [false, Errors.BadUserInput] => {
+export const validateEva = (eva: string): [true, string] | [false, Errors.BadUserInput[]] => {
 	eva = eva.trim();
 	const errors: Errors.BadUserInput[] = validateString({ value: eva, notEmpty: true, max: 255 });
 
-	return errors.length > 0 ? [false, errors[0]] : [true, eva];
+	return errors.length > 0 ? [false, errors] : [true, eva];
 };
 
-export const validateSemester = (semester: number): [true, number] | [false, Errors.BadUserInput] => {
+export const validateSemester = (semester: number): [true, number] | [false, Errors.BadUserInput[]] => {
 	const errors: Errors.BadUserInput[] = [];
 
 	if (semester !== 1 && semester !== 2)
@@ -44,16 +43,16 @@ export const validateSemester = (semester: number): [true, number] | [false, Err
 			message: "El campo semestre solo puede tomar los valores 1 y 2.",
 		});
 
-	return errors.length > 0 ? [false, errors[0]] : [true, semester];
+	return errors.length > 0 ? [false, errors] : [true, semester];
 };
 
-export const validateYear = (year: number): [true, number] | [false, Errors.BadUserInput] => {
+export const validateYear = (year: number): [true, number] | [false, Errors.BadUserInput[]] => {
 	const errors: Errors.BadUserInput[] = validateNumber({ value: year, max: 2050, min: 2005 });
 
-	return errors.length > 0 ? [false, errors[0]] : [true, year];
+	return errors.length > 0 ? [false, errors] : [true, year];
 };
 
-export const validateIconURL = (iconURL: string): [true, string | null] | [false, Errors.BadUserInput] => {
+export const validateIconURL = (iconURL: string): [true, string | null] | [false, Errors.BadUserInput[]] => {
 	let result: string | null = iconURL.trim();
 	const errors: Errors.BadUserInput[] = [];
 
@@ -65,175 +64,107 @@ export const validateIconURL = (iconURL: string): [true, string | null] | [false
 			message: "Hubo un error al intentar guardar la url del ícono del curso.",
 		});
 
-	return errors.length > 0 ? [false, errors[0]] : [true, result];
+	return errors.length > 0 ? [false, errors] : [true, result];
 };
 
-export type CreateData = {
-	code: string;
-	name: string;
-	status?: Nullable<Models.CourseStatus>;
-	eva?: Nullable<string>;
-	semester: number;
-	year: number;
-	icon?: FileUpload | null;
+export type DataToValidate = Required<
+	Pick<Models.Course, keyof Pick<typeof Models.CourseAttributes, "code" | "name" | "eva" | "visibility">>
+> & {
+	icon: FileUpload;
 };
-export type ValidateCreateDataOptions = {
-	data: CreateData;
-};
-export type ValidatedCreateData = Omit<CreateData, "icon"> & {
-	iconUrl: string;
-};
-export type InvalidatedCreateData = Partial<Record<keyof CreateData, Errors.BadUserInput | Errors.BadUserInput[]>>;
-export const validateCreateData = async ({
-	data,
-}: ValidateCreateDataOptions): Promise<[true, ValidatedCreateData] | [false, InvalidatedCreateData]> => {
-	const errors: InvalidatedCreateData = {};
+export type InvalidatedData<TKeys extends keyof DataToValidate = keyof DataToValidate> = Partial<
+	Record<TKeys, Errors.BadUserInput[]>
+>;
+export type ValidatedData<TKeys extends keyof DataToValidate = keyof DataToValidate> = Omit<
+	Pick<DataToValidate, TKeys>,
+	"icon"
+> &
+	("icon" extends TKeys
+		? {
+				icon: {
+					iconUrl: string;
+					unlink: () => void;
+				};
+		  }
+		: { icon?: undefined });
+export const validateData = async <TKeys extends keyof DataToValidate>(
+	data: Pick<DataToValidate, TKeys>
+): Promise<[true, ValidatedData<TKeys>] | [false, InvalidatedData<TKeys>]> => {
+	const validatedData: ValidatedData = {} as any;
+	const errors: InvalidatedData = {} as any;
 
-	let code = "";
-	const codeValidation = await validateCode(data.code);
-	if (codeValidation[0]) code = codeValidation[1];
-	else errors.code = codeValidation[1];
-
-	let name = "";
-	const nameValidation = await validateName(data.name);
-	if (nameValidation[0]) name = nameValidation[1];
-	else errors.name = nameValidation[1];
-
-	let eva: string | null = null;
-	if (typeof data.eva === "string") {
-		const evaValidation = await validateEva(data.eva);
-		if (evaValidation[0]) eva = evaValidation[1];
-		else errors.eva = evaValidation[1];
-	} else eva = null;
-
-	let semester = 0;
-	const semesterValidation = await validateSemester(data.semester);
-	if (semesterValidation[0]) semester = semesterValidation[1];
-	else errors.semester = semesterValidation[1];
-
-	let year = 0;
-	const yearValidation = await validateYear(data.year);
-	if (yearValidation[0]) year = yearValidation[1];
-	else errors.year = yearValidation[1];
-
-	let iconUrl: string = serverConfig.DEFAULT_COURSE_ICON_URL;
-	let unlinkCustomIcon: (() => void) | undefined;
-	if (data.icon) {
-		const { icon } = data;
-
-		const saveFileOutput = await saveFile(icon, ({ uuid, extension }) =>
-			path.join(serverConfig.COURSE_ICONS_PATH, `${uuid}.${extension}`)
-		);
-		unlinkCustomIcon = saveFileOutput.unlink;
-		const iconURLValidation = await validateIconURL(saveFileOutput.url);
-
-		if (iconURLValidation[0]) iconUrl = saveFileOutput.url;
-		else errors.icon = iconURLValidation[1];
-	}
-
-	const errorsFound = Object.keys(errors).length > 0;
-
-	if (errorsFound && unlinkCustomIcon) unlinkCustomIcon();
-
-	return errorsFound
-		? [false, errors]
-		: [
-				true,
-				{
-					status: data.status,
-					code,
-					name,
-					eva,
-					semester,
-					year,
-					iconUrl,
-				},
-		  ];
-};
-
-export type UpdateData = {
-	code?: Nullable<string>;
-	name?: Nullable<string>;
-	disabled?: Nullable<boolean>;
-	eva?: Nullable<string>;
-	semester?: Nullable<number>;
-	year?: Nullable<number>;
-	icon?: FileUpload | null;
-};
-export type ValidateUpdateOptions = {
-	course: Models.Course;
-	data: UpdateData;
-};
-export type ValidatedUpdateData = {
-	code?: string;
-	name?: string;
-	disabled: boolean;
-	eva?: Nullable<string>;
-	semester?: number;
-	year?: number;
-	iconUrl?: Nullable<string>;
-};
-export type InvalidatedUpdateData = Partial<Record<keyof CreateData, Errors.BadUserInput | Errors.BadUserInput[]>>;
-export const validateUpdateData = async ({
-	data,
-	course,
-}: ValidateUpdateOptions): Promise<[true, ValidatedUpdateData] | [false, InvalidatedUpdateData]> => {
-	const validatedData: ValidatedUpdateData = { disabled: data.disabled === true };
-	const errors: InvalidatedCreateData = {};
-
-	if (typeof data.code === "string" && data.code !== course.code) {
-		const codeValidation = await validateCode(data.code);
-
-		if (codeValidation[0]) validatedData.code = codeValidation[1];
-		else errors.code = codeValidation[1];
-	}
-
-	if (typeof data.name === "string" && data.name !== course.name) {
-		const nameValidation = await validateName(data.name);
-
-		if (nameValidation[0]) validatedData.name = nameValidation[1];
-		else errors.name = nameValidation[1];
-	}
-
-	if (typeof data.eva === "string" && data.eva !== course.eva) {
-		const evaValidation = await validateEva(data.eva);
-
-		if (evaValidation[0]) validatedData.eva = evaValidation[1];
-		else errors.eva = evaValidation[1];
-	} else if (data.eva === null) validatedData.eva = null;
-
-	if (typeof data.semester === "number" && data.semester !== course.semester) {
-		const semesterValidation = await validateSemester(data.semester);
-
-		if (semesterValidation[0]) validatedData.semester = semesterValidation[1];
-		else errors.semester = semesterValidation[1];
-	}
-
-	if (typeof data.year === "number" && data.year !== course.year) {
-		const yearValidation = await validateYear(data.year);
-
-		if (yearValidation[0]) validatedData.year = yearValidation[1];
-		else errors.year = yearValidation[1];
-	}
+	const getDataProperty = <TKey extends keyof DataToValidate>(key: TKey): DataToValidate[TKey] | undefined =>
+		(data as DataToValidate)[key] || undefined;
 
 	let unlinkCustomIcon: (() => void) | undefined;
-	if (data.icon) {
-		const { icon } = data;
+	const validators: Record<keyof DataToValidate, () => Promise<void> | void> = {
+		code: async () => {
+			const code = getDataProperty("code");
 
-		const saveFileOutput = await saveFile(icon, ({ uuid, extension }) =>
-			path.join(serverConfig.COURSE_ICONS_PATH, `${uuid}.${extension}`)
-		);
-		unlinkCustomIcon = saveFileOutput.unlink;
-		const iconURLValidation = await validateIconURL(saveFileOutput.url);
+			if (code === undefined) return;
 
-		if (iconURLValidation[0]) validatedData.iconUrl = saveFileOutput.url;
-		else errors.icon = iconURLValidation[1];
-	} else if (typeof data.icon === "undefined") validatedData.iconUrl = serverConfig.DEFAULT_COURSE_ICON_URL;
-	else if (data.icon === null) validatedData.iconUrl = null;
+			const codeValidation = await validateCode(code);
 
-	const errorsFound = Object.keys(errors).length > 0;
+			if (codeValidation[0]) validatedData.code = codeValidation[1];
+			else errors.code = codeValidation[1];
+		},
+		name: async () => {
+			const name = getDataProperty("name");
 
-	if (errorsFound && unlinkCustomIcon) unlinkCustomIcon();
+			if (name === undefined) return;
 
-	return Object.keys(errors).length > 0 ? [false, errors] : [true, validatedData];
+			const nameValidation = await validateName(name);
+
+			if (nameValidation[0]) validatedData.name = nameValidation[1];
+			else errors.name = nameValidation[1];
+		},
+		eva: async () => {
+			const eva = getDataProperty("eva");
+
+			if (eva === undefined) return;
+
+			if (eva === null) {
+				validatedData.eva = null;
+				return;
+			}
+
+			const evaValidation = await validateEva(eva);
+
+			if (evaValidation[0]) validatedData.eva = evaValidation[1];
+			else errors.eva = evaValidation[1];
+		},
+		visibility: () => {
+			const visibility = getDataProperty("visibility");
+
+			if (visibility === undefined) return;
+
+			validatedData.visibility = visibility;
+		},
+		icon: async () => {
+			const icon = getDataProperty("icon");
+
+			if (icon === undefined) return;
+
+			const saveFileOutput = await saveFile(icon, ({ uuid, extension }) =>
+				path.join(serverConfig.COURSE_ICONS_PATH, `${uuid}.${extension}`)
+			);
+			unlinkCustomIcon = saveFileOutput.unlink;
+			const iconURLValidation = await validateIconURL(saveFileOutput.url);
+
+			if (iconURLValidation[0])
+				validatedData.icon = {
+					iconUrl: saveFileOutput.url,
+					unlink: saveFileOutput.unlink,
+				};
+			else errors.icon = iconURLValidation[1];
+		},
+	};
+
+	for (const key of Object.keys(validators) as Array<keyof DataToValidate>) await validators[key]();
+
+	const hasErrors = Object.keys(errors).length > 0;
+
+	if (hasErrors && unlinkCustomIcon) unlinkCustomIcon();
+
+	return hasErrors ? [false, errors as any] : [true, validatedData as any];
 };

@@ -40,7 +40,7 @@ if (!READ_DB_HOST) throw new Error("READ_DB_HOST not defined");
 		code: string;
 		name: string;
 	}>(
-		`select text, number, code, name from videos left join titles on titles.video_id = videos.id left join courses on courses.id = videos.course_id where not(disabled) and code!='vyo19' order by videos.created_at desc limit 10;`,
+		`select text, number, code, name from videos left join titles on titles.video_id = videos.id left join courses on courses.id = videos.course_id where not(disabled) and code!='vyo19' and code!='vyo15' order by videos.created_at desc limit 10;`,
 		{
 			type: QueryTypes.SELECT,
 		}

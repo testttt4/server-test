@@ -1,21 +1,37 @@
-import * as Data from "../data";
 import * as Errors from "../errors";
 import * as Models from "../models";
 
-import { validateString } from "./Base";
+import { validateNumber, validateString } from "./Base";
 
 export const validateName = (name: string): [true, string] | [false, Errors.BadUserInput[]] => {
 	name = name.trim();
-
-	const errors = validateString({ value: name, min: 1, notEmpty: true, max: 255 });
+	const errors: Errors.BadUserInput[] = validateString({ value: name, notEmpty: true, max: 255 });
 
 	return errors.length > 0 ? [false, errors] : [true, name];
 };
 
+export const validateSemester = (semester: number): [true, number] | [false, Errors.BadUserInput[]] => {
+	const errors: Errors.BadUserInput[] = [];
+
+	if (semester !== 1 && semester !== 2)
+		errors.push({
+			code: "INVALID_VALUE",
+			message: "El campo semestre solo puede tomar los valores 1 y 2.",
+		});
+
+	return errors.length > 0 ? [false, errors] : [true, semester];
+};
+
+export const validateYear = (year: number): [true, number] | [false, Errors.BadUserInput[]] => {
+	const errors: Errors.BadUserInput[] = validateNumber({ value: year, max: 2050, min: 2005 });
+
+	return errors.length > 0 ? [false, errors] : [true, year];
+};
+
 export type DataToValidate = Required<
 	Pick<
-		Models.CourseClassList,
-		keyof Pick<typeof Models.CourseClassListAttributes, "name" | "visibility" | "courseEditionId">
+		Models.CourseEdition,
+		keyof Pick<typeof Models.CourseEditionAttributes, "name" | "semester" | "year" | "visibility">
 	>
 >;
 export type InvalidatedData<TKeys extends keyof DataToValidate = keyof DataToValidate> = Partial<
@@ -49,24 +65,25 @@ export const validateData = async <TKeys extends keyof DataToValidate>(
 
 			validatedData.visibility = visibility;
 		},
-		courseEditionId: async () => {
-			const courseEditionId = getDataProperty("courseEditionId");
+		semester: async () => {
+			const semester = getDataProperty("semester");
 
-			if (courseEditionId === undefined) return;
+			if (semester === undefined) return;
 
-			const courseEdition = await Data.CourseEdition.findOne({
-				id: courseEditionId,
-				includeDisabled: true,
-			});
+			const semesterValidation = await validateSemester(semester);
 
-			if (!courseEdition)
-				errors.courseEditionId = [
-					{
-						code: "INVALID_VALUE",
-						message: `No se encontró una edición del curso con id ${courseEditionId}`,
-					},
-				];
-			else validatedData.courseEditionId = courseEditionId;
+			if (semesterValidation[0]) validatedData.semester = semesterValidation[1];
+			else errors.semester = semesterValidation[1];
+		},
+		year: async () => {
+			const year = getDataProperty("year");
+
+			if (year === undefined) return;
+
+			const yearValidation = await validateYear(year);
+
+			if (yearValidation[0]) validatedData.year = yearValidation[1];
+			else errors.year = yearValidation[1];
 		},
 	};
 

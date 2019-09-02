@@ -1,63 +1,63 @@
-import * as CourseClassList from "./CourseClassList";
+import * as CourseEdition from "./CourseEdition";
 import * as Data from "../data";
 import * as Models from "../models";
 import * as Validators from "../validators";
 import * as fs from "fs";
 import * as path from "path";
 
-import { FileUpload } from "graphql-upload";
-import { identity } from "../utils/Helper";
+import { identity, pick } from "../utils/Helper";
+
 import moment from "moment";
 import { serverConfig } from "../serverConfig";
 
 export type CreateFromValidatedDataOptions = {
 	userId: number;
-	data: Validators.Course.ValidatedCreateData;
+	data: Required<
+		Pick<
+			Models.Course,
+			keyof Omit<
+				typeof Models.CourseAttributes,
+				"id" | "createdAt" | "createdById" | "updatedAt" | "updatedById" | "deletedAt" | "deletedById"
+			>
+		>
+	>;
 };
 export const createFromValidatedData = async (options: CreateFromValidatedDataOptions): Promise<Models.Course> => {
 	const course = new Models.Course(
 		identity<Required<Pick<Models.Course, keyof Omit<typeof Models.CourseAttributes, "id">>>>({
-			code: options.data.code,
-			name: options.data.name,
-			visibility: options.data.status || "public",
-			eva: options.data.eva || null,
-			iconURL: options.data.iconUrl,
-			createdById: options.userId,
 			createdAt: moment().toDate(),
-			updatedById: options.userId,
+			createdById: options.userId,
 			updatedAt: moment().toDate(),
-			deletedById: null,
+			updatedById: options.userId,
 			deletedAt: null,
+			deletedById: null,
+			...options.data,
 		})
 	);
 
-	course.code = options.data.code;
-	course.name = options.data.name;
-	course.semester = options.data.semester;
-	course.year = options.data.year;
-
-	Data.Base.reloadCache();
+	Data.Base.Cache.removeCache();
 
 	return course;
 };
 
 export type CreateOptions = {
 	userId: number;
-	data: Omit<Validators.Course.CreateData, "iconURL"> & {
-		icon?: FileUpload | null;
-	};
+	data: Validators.Course.DataToValidate;
 };
 export const create = async ({
 	data,
 	userId,
-}: CreateOptions): Promise<[true, Models.Course] | [false, Validators.Course.InvalidatedCreateData]> => {
-	const dataValidation = await Validators.Course.validateCreateData({ data });
+}: CreateOptions): Promise<[true, Models.Course] | [false, Validators.Course.InvalidatedData]> => {
+	const dataValidation = await Validators.Course.validateData(data);
 
 	if (!dataValidation[0]) return dataValidation;
 
+	const [, validatedData] = dataValidation;
+
 	const course = await createFromValidatedData({
 		data: {
-			...dataValidation[1],
+			...pick(validatedData, ["code", "eva", "name", "visibility"]),
+			iconURL: validatedData.icon.iconUrl,
 		},
 		userId,
 	});
@@ -65,18 +65,18 @@ export const create = async ({
 	return [true, course];
 };
 
-export type UpdateOptions = {
+export type UpdateOptions<TKeys extends keyof Validators.Course.DataToValidate> = {
 	id: number;
-	data: Omit<Validators.Course.UpdateData, "iconURL"> & {
-		icon?: FileUpload | null | undefined;
-	};
+	data: Pick<Validators.Course.DataToValidate, TKeys>;
 	userId: number;
 };
-export const update = async ({
+export const update = async <TDataKeys extends keyof Validators.Course.DataToValidate>({
 	id,
 	data,
 	userId,
-}: UpdateOptions): Promise<[true, Models.Course] | [false, Validators.Course.InvalidatedUpdateData]> => {
+}: UpdateOptions<TDataKeys>): Promise<
+	[true, Models.Course] | [false, Pick<Validators.Course.InvalidatedData<TDataKeys>, TDataKeys>]
+> => {
 	const course = await Data.Course.findOneOrThrow({ id, includeDisabled: true });
 	const prevIconURL = course.iconURL;
 	let prevIconPath: string | undefined;
@@ -84,44 +84,51 @@ export const update = async ({
 	if (prevIconURL) {
 		const indexOf = prevIconURL.indexOf(serverConfig.COURSE_ICONS_URL);
 
-		if (indexOf !== -1) prevIconPath = path.join(serverConfig.COURSE_ICONS_PATH, prevIconURL.substr(indexOf));
+		if (indexOf !== -1)
+			prevIconPath = path.join(serverConfig.COURSE_ICONS_PATH, ...prevIconURL.substr(indexOf).split("/"));
 	}
 
-	const dataValidation = await Validators.Course.validateUpdateData({
-		data,
-		course,
-	});
+	const dataValidation = await Validators.Course.validateData(data);
 
 	if (!dataValidation[0]) return dataValidation;
 
-	await course.update({
-		...dataValidation[1],
+	const { icon, ...dataValidationRest } = dataValidation[1];
+
+	const updateData: Partial<Pick<Models.Course, keyof typeof Models.CourseAttributes>> = {
+		iconURL: (icon && icon.iconUrl) || undefined,
 		updatedAt: moment().toDate(),
-		updatedBy: userId,
-	});
+		updatedById: userId,
+	};
+
+	await course.update(
+		identity<Partial<Pick<Models.Course, keyof typeof Models.CourseAttributes>>>({
+			...updateData,
+			...dataValidationRest,
+		})
+	);
 
 	if (prevIconPath && prevIconPath !== serverConfig.DEFAULT_COURSE_ICON_FILE_PATH && fs.existsSync(prevIconPath))
 		fs.unlinkSync(prevIconPath);
 
-	Data.Base.reloadCache();
+	Data.Base.Cache.removeCache();
 
 	return [true, course];
 };
 
-export type DeleteCourseOptions = {
+export type RemoveOptions = {
 	id: number;
 	userId: number;
 };
-export const deleteCourse = async ({ id, userId }: DeleteCourseOptions): Promise<boolean> => {
+export const remove = async ({ id, userId }: RemoveOptions): Promise<boolean> => {
 	const course = await Data.Course.findOneOrThrow({ id, includeDisabled: true });
 
-	course.deletedBy = userId;
-	course.deletedAt = moment().toISOString();
+	course.deletedById = userId;
+	course.deletedAt = moment().toDate();
 
-	await CourseClassList.deleteAllByCourseId({ userId, courseId: id });
+	await CourseEdition.removeAllByCourseId({ userId, courseId: id });
 	await course.save();
 
-	Data.Base.reloadCache();
+	Data.Base.Cache.removeCache();
 
 	return true;
 };

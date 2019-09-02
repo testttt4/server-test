@@ -21,7 +21,8 @@ export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Model
 
 		if (!options.includeDisabled) where[Models.CourseClassAttributes.disabled] = { [Op.or]: [null, false] };
 
-		return Models.CourseClass.findAll({ where });
+		const res = await Models.CourseClass.findAll({ where });
+		return res;
 	},
 });
 
@@ -38,7 +39,7 @@ export const findAllLatest = getDataHandler<() => Promise<Models.CourseClass[]>>
 					as: Models.CourseClassRelations.courseClassList,
 					attributes: [],
 					where: {
-						[Models.CourseClassListAttributes.status]: Models.CourseClassListStatus.public,
+						[Models.CourseClassListAttributes.visibility]: Models.CourseClassListVisibility.public,
 						[Models.CourseClassListAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
 					},
 					include: [
@@ -47,7 +48,7 @@ export const findAllLatest = getDataHandler<() => Promise<Models.CourseClass[]>>
 							as: Models.CourseClassListRelations.courseEdition,
 							attributes: [],
 							where: {
-								[Models.CourseEditionAttributes.status]: Models.CourseEditionStatus.public,
+								[Models.CourseEditionAttributes.visibility]: Models.CourseEditionVisibility.public,
 								[Models.CourseEditionAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
 							},
 							include: [
@@ -104,17 +105,13 @@ export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Model
 					model: Models.CourseClassList,
 					as: Models.CourseClassRelations.courseClassList,
 					attributes: [],
-					where: {
-						[Models.CourseClassListAttributes.status]: Models.CourseClassListStatus.public,
-						[Models.CourseClassListAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
-					},
 					include: [
 						{
 							model: Models.CourseEdition,
 							as: Models.CourseClassListRelations.courseEdition,
 							attributes: [],
 							where: {
-								[Models.CourseEditionAttributes.status]: Models.CourseEditionStatus.public,
+								[Models.CourseEditionAttributes.visibility]: Models.CourseEditionVisibility.public,
 								[Models.CourseEditionAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
 							},
 							include: [

@@ -1,5 +1,6 @@
 import * as Data from "../data";
 import * as Errors from "../errors";
+import * as Models from "../models";
 
 import { validateNumber, validateString } from "./Base";
 
@@ -16,64 +17,64 @@ export const validatePosition = (position: number): [true, number] | [false, Err
 	return errors.length > 0 ? [false, errors] : [true, position];
 };
 
-export const validateCourseClassId = async (
-	courseClassId: number
-): Promise<[true, number] | [false, Errors.BadUserInput[]]> => {
-	const courseClass = await Data.CourseClass.findOne({
-		id: courseClassId,
-		includeDisabled: true,
-	});
+export type DataToValidate = Required<
+	Pick<Models.Video, keyof Pick<typeof Models.VideoAttributes, "courseClassId" | "name" | "position">>
+>;
+export type InvalidatedData<TKeys extends keyof DataToValidate = keyof DataToValidate> = Partial<
+	Record<TKeys, Errors.BadUserInput[]>
+>;
+export type ValidatedData<TKeys extends keyof DataToValidate = keyof DataToValidate> = Pick<DataToValidate, TKeys>;
+export const validateData = async <TKeys extends keyof DataToValidate>(
+	data: Pick<DataToValidate, TKeys>
+): Promise<[true, ValidatedData<TKeys>] | [false, InvalidatedData<TKeys>]> => {
+	const validatedData: ValidatedData = {} as any;
+	const errors: InvalidatedData = {} as any;
 
-	const errors: Errors.BadUserInput[] = [];
-	if (!courseClass)
-		errors.push({ code: "INVALID_VALUE", message: `No se encontró una clase con el id ${courseClassId}` });
+	const getDataProperty = <TKey extends keyof DataToValidate>(key: TKey): DataToValidate[TKey] | undefined =>
+		(data as DataToValidate)[key] || undefined;
 
-	return errors.length > 0 ? [false, errors] : [true, courseClassId];
-};
+	const validators: Record<keyof DataToValidate, () => Promise<void> | void> = {
+		courseClassId: () => {
+			const courseClassId = getDataProperty("courseClassId");
 
-export type CreateData = {
-	name: string;
-	position: number;
-	courseClassId: number;
-};
-export type ValidatedCreateData = {
-	name: string;
-	position: number;
-	courseClassId: number;
-};
-export type InvalidatedCreateData = {
-	name?: Errors.BadUserInput | Errors.BadUserInput[];
-	position?: Errors.BadUserInput | Errors.BadUserInput[];
-	courseClassId?: Errors.BadUserInput | Errors.BadUserInput[];
-};
-export const validateData = async (
-	data: CreateData
-): Promise<[true, ValidatedCreateData] | [false, InvalidatedCreateData]> => {
-	const errors: InvalidatedCreateData = {};
+			if (courseClassId === undefined) return;
 
-	let name = "";
-	const nameValidation = await validateName(data.name);
-	if (nameValidation[0]) name = nameValidation[1];
-	else errors.name = nameValidation[1];
+			const courseClass = Data.CourseClass.findOne({ id: courseClassId, includeDisabled: true });
 
-	let position = 0;
-	const positionValidation = await validatePosition(data.position);
-	if (positionValidation[0]) position = positionValidation[1];
-	else errors.position = positionValidation[1];
-
-	let courseClassId = 0;
-	const courseClassIdValidation = await validateCourseClassId(data.courseClassId);
-	if (courseClassIdValidation[0]) courseClassId = courseClassIdValidation[1];
-	else errors.courseClassId = courseClassIdValidation[1];
-
-	if (Object.keys(errors).length > 0) return [false, errors];
-
-	return [
-		true,
-		{
-			name,
-			position,
-			courseClassId,
+			if (!courseClass)
+				errors.courseClassId = [
+					{
+						code: "INVALID_VALUE",
+						message: `No se encontró la clase con id ${courseClassId}`,
+					},
+				];
+			else validatedData.courseClassId = courseClassId;
 		},
-	];
+		name: async () => {
+			const name = getDataProperty("name");
+
+			if (name === undefined) return;
+
+			const nameValidation = await validateName(name);
+
+			if (nameValidation[0]) validatedData.name = nameValidation[1];
+			else errors.name = nameValidation[1];
+		},
+		position: async () => {
+			const position = getDataProperty("position");
+
+			if (position === undefined) return;
+
+			const positionValidation = await validatePosition(position);
+
+			if (positionValidation[0]) validatedData.position = positionValidation[1];
+			else errors.position = positionValidation[1];
+		},
+	};
+
+	for (const key of Object.keys(validators) as Array<keyof DataToValidate>) await validators[key]();
+
+	const hasErrors = Object.keys(errors).length > 0;
+
+	return hasErrors ? [false, errors as any] : [true, validatedData as any];
 };

@@ -5,7 +5,7 @@ import { MiddlewareFn, UseMiddleware } from "type-graphql";
 import { Context } from "../Context";
 import { getTokenPayload } from "../utils/Helper";
 
-export const authenticateMiddleware: () => MiddlewareFn<Context> = () => async ({ args, context }, next) => {
+export const authenticateMiddleware: () => MiddlewareFn<Context> = () => async ({ context }, next) => {
 	const token = context.req.headers["x-token"];
 
 	const payload = getTokenPayload(typeof token === "string" ? token : "");

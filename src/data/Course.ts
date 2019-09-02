@@ -17,7 +17,7 @@ export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Model
 		else config.ignore();
 
 		if (!options.includeDisabled)
-			where[Models.CourseAttributes.visibility] = { [Op.not]: Models.CourseVisibility.public };
+			where[Models.CourseAttributes.visibility] = { [Op.eq]: Models.CourseVisibility.public };
 
 		return Models.Course.findAll({ where });
 	},
@@ -48,7 +48,7 @@ export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Model
 		else config.ignore();
 
 		if (!options.includeDisabled)
-			where[Models.CourseAttributes.visibility] = { [Op.not]: Models.CourseVisibility.public };
+			where[Models.CourseAttributes.visibility] = { [Op.eq]: Models.CourseVisibility.public };
 
 		return Models.Course.findOne({
 			where,

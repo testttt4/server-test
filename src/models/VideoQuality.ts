@@ -64,7 +64,7 @@ export class VideoQuality extends Model<VideoQuality> {
 	public videoId: number;
 
 	@BelongsTo(() => Video, VideoQualityAttributes.videoId)
-	public video: any;
+	public video: Video;
 
 	@Column({ type: DataType.INTEGER })
 	public width: number;
@@ -96,7 +96,7 @@ export class VideoQuality extends Model<VideoQuality> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date | string>;
+	public deletedAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)

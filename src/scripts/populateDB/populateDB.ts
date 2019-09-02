@@ -6,16 +6,17 @@ import * as Models from "../../models";
 
 import { Model, Sequelize } from "sequelize-typescript";
 import axios, { AxiosError } from "axios";
+import { getVideoResolution, identity } from "../../utils/Helper";
 
 import { Pool } from "pg";
 import { QueryTypes } from "sequelize";
+import { readVideosQualities as _readVideosQualities } from "./readVideosQualities.json";
 import { from as copyFrom } from "pg-copy-streams";
 import csvStringify from "csv-stringify";
 import fs from "fs";
 import https from "https";
 import moment from "moment";
 import path from "path";
-import { readVideosQualities } from "./readVideosQualities";
 import { serverConfig } from "../../serverConfig";
 import urljoin from "url-join";
 
@@ -57,13 +58,13 @@ if (!WRITE_DB_HOST) throw new Error("WRITE_DB_HOST not defined");
 
 type ReadCourse = {
 	id: number;
-	code: string | undefined | null;
-	name: string | undefined | null;
+	code: string;
+	name: string;
 	url: string | undefined | null;
-	semester: number | undefined | null;
-	year: number | undefined | null;
-	created_at: string | undefined | null;
-	updated_at: string | undefined | null;
+	semester: number;
+	year: number;
+	created_at: string;
+	updated_at: string;
 };
 
 const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
@@ -86,6 +87,19 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 };
 
 (async () => {
+	const readVideosQualitiesFilePath = path.join(serverConfig.FILES_PATH, "_readVideosQualities.json");
+
+	if (!fs.existsSync(serverConfig.FILES_PATH)) fs.mkdirSync(serverConfig.FILES_PATH, { recursive: true });
+
+	if (!fs.existsSync(readVideosQualitiesFilePath))
+		fs.writeFileSync(readVideosQualitiesFilePath, JSON.stringify({ readVideosQualities: _readVideosQualities }));
+
+	await new Promise(resolve => setTimeout(resolve, 0));
+
+	const readVideosQualities: typeof _readVideosQualities = JSON.parse(
+		fs.readFileSync(readVideosQualitiesFilePath, "utf8")
+	).readVideosQualities;
+
 	const readDB = new Sequelize({
 		database: READ_DB_NAME,
 		port: READ_DB_PORT,
@@ -118,9 +132,9 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 
 	writeDB.addModels([
 		Models.Course,
-		Models.CourseEdition,
 		Models.CourseClass,
 		Models.CourseClassList,
+		Models.CourseEdition,
 		Models.FAQ,
 		Models.User,
 		Models.UserRole,
@@ -135,6 +149,9 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 	const coursesJSON: Array<{ code: string; name: string; eva: string | undefined | null }> = (await axios.get(
 		"https://open.fing.edu.uy/data/courses.json"
 	)).data.courses;
+	const faqsJSON: Array<{ title: string; content: string }> = (await axios.get(
+		"https://open.fing.edu.uy/data/faq.json"
+	)).data.faqs;
 
 	type ReadTitle = {
 		id: number;
@@ -148,18 +165,20 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 
 	type ReadVideo = {
 		id: number;
-		number: number | undefined | null;
-		disabled: boolean | undefined | null;
-		course_id: number | undefined | null;
-		created_at: string | undefined | null;
-		updated_at: string | undefined | null;
+		number: number;
+		disabled: boolean;
+		youtube: any;
+		course_id: number;
+		created_at: string;
+		updated_at: string;
 	};
+	const readVideos = await readDB.query<ReadVideo>("select * from videos", { type: QueryTypes.SELECT });
 
 	let userRoleData: Required<Pick<Models.UserRole, keyof Omit<typeof Models.UserRoleAttributes, "id">>> = {
 		name: "admin",
 		createdAt: moment().toDate(),
 		updatedAt: moment().toDate(),
-		deletedAt: undefined,
+		deletedAt: null,
 	};
 	let adminUserRole = new Models.UserRole(userRoleData);
 	await adminUserRole.save();
@@ -174,7 +193,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 		name: "Santiago González",
 		createdAt: moment().toDate(),
 		updatedAt: moment().toDate(),
-		deletedAt: undefined,
+		deletedAt: null,
 	};
 	const user = new Models.User(userData);
 	await user.save();
@@ -187,14 +206,12 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 			userRoleId: adminUserRole.id,
 			createdAt: moment().toDate(),
 			updatedAt: moment().toDate(),
-			deletedAt: undefined,
+			deletedAt: null,
 		};
 		const userUserRole = new Models.UserUserRole(userUserRoleData);
 
 		await userUserRole.save();
 	})();
-
-	/////////////////////////////////////////////////
 
 	class EntityToCreate<T extends Model> {
 		private nextId = 1;
@@ -213,6 +230,25 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 	const videosToCreate = new EntityToCreate<Models.Video>();
 	const videoQualitiesToCreate = new EntityToCreate<Models.VideoQuality>();
 	const videoFormatsToCreate = new EntityToCreate<Models.VideoFormat>();
+	const faqsToCreate = new EntityToCreate<Models.FAQ>();
+
+	faqsJSON.forEach(faq => {
+		faqsToCreate.add(
+			new Models.FAQ(
+				identity<Required<Pick<Models.FAQ, keyof Omit<typeof Models.FAQAttributes, "id">>>>({
+					title: faq.title,
+					content: faq.content,
+					isHTML: faq.content.includes("<"),
+					createdAt: moment().toDate(),
+					createdById: user.id,
+					updatedAt: moment().toDate(),
+					updatedById: user.id,
+					deletedAt: null,
+					deletedById: null,
+				})
+			)
+		);
+	});
 
 	if (!fs.existsSync(serverConfig.COURSE_ICONS_PATH))
 		fs.mkdirSync(serverConfig.COURSE_ICONS_PATH, { recursive: true });
@@ -243,9 +279,9 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 		if (!course) {
 			const courseData: Required<Pick<Models.Course, keyof Omit<typeof Models.CourseAttributes, "id">>> = {
 				name: getCleanReadCourseName(readCourse),
-				status: !coursesJSON.find(c => c.code === readCourse.code)
-					? Models.CourseStatus.hidden
-					: Models.CourseStatus.public,
+				visibility: !coursesJSON.find(c => c.code === readCourse.code)
+					? Models.CourseVisibility.hidden
+					: Models.CourseVisibility.public,
 				code: cleanCourseCode,
 				iconURL: await getNewCourseIconUrl(readCourse),
 				eva: readCourse.url || null,
@@ -253,7 +289,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 				createdById: user.id,
 				updatedAt: moment(readCourse.updated_at).toDate(),
 				updatedById: user.id,
-				deletedAt: undefined,
+				deletedAt: null,
 				deletedById: undefined,
 			};
 
@@ -278,15 +314,15 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 				year: readCourse.year,
 				semester: readCourse.semester,
 				courseId: course.id,
-				status:
-					course.status === Models.CourseStatus.disabled
-						? Models.CourseEditionStatus.disabled
-						: Models.CourseEditionStatus.public,
+				visibility:
+					course.visibility === Models.CourseVisibility.disabled
+						? Models.CourseEditionVisibility.disabled
+						: Models.CourseEditionVisibility.public,
 				createdAt: moment(readCourse.created_at).toDate(),
 				createdById: user.id,
 				updatedAt: moment(readCourse.updated_at).toDate(),
 				updatedById: user.id,
-				deletedAt: undefined,
+				deletedAt: null,
 				deletedById: undefined,
 			};
 
@@ -307,108 +343,299 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 				: readCourse.name.includes("Teórico")
 				? "Teórico"
 				: "Default",
-			status: edition.status,
+			visibility: edition.visibility,
 			createdAt: moment(readCourse.created_at).toDate(),
 			createdById: user.id,
 			updatedAt: moment(readCourse.updated_at).toDate(),
 			updatedById: user.id,
-			deletedAt: undefined,
+			deletedAt: null,
 			deletedById: undefined,
 		};
 		const courseClassList = new Models.CourseClassList(courseClassListData);
 		courseClassListsToCreate.add(courseClassList);
 
-		const courseReadVideosQualities = readVideosQualities.filter(
-			readVideoQuality => readVideoQuality.readVideo.course_id === readCourse.id
-		);
+		const isAxiosError = (response: any): response is AxiosError =>
+			"isAxiosError" in response && response.isAxiosError;
+		const times: Record<number, number> = {};
+		const getReadVideoQualities = async (
+			readVideo: ReadVideo
+		): Promise<
+			| Array<{
+					width: number;
+					height: number;
+					formats: Array<{
+						name: string;
+						url: string;
+					}>;
+			  }>
+			| false
+		> => {
+			const i = readVideo.id;
 
-		await Promise.all(
-			courseReadVideosQualities.map(async courseReadVideoQualities => {
-				const readTitle = readTitles.find(t => t.video_id === courseReadVideoQualities.readVideo.id);
-				const courseClassTitle =
-					(readTitle && readTitle.text) || `Clase ${courseReadVideoQualities.readVideo.number}`;
+			if (!times[i]) times[i] = 1;
+			else times[i] += 1;
 
-				const createdAt = moment(courseReadVideoQualities.readVideo.created_at).toDate();
-				const createdById = user.id;
-				const updatedAt = moment(courseReadVideoQualities.readVideo.updated_at).toDate();
-				const updatedById = user.id;
+			await new Promise(resolve => setTimeout(resolve, 0));
+			const readCourse = readCourses.find(rc => rc.id === readVideo.course_id);
 
-				const courseClassData: Required<
-					Pick<Models.CourseClass, keyof Omit<typeof Models.CourseClassAttributes, "id">>
+			if (!readCourse) {
+				console.log(`Course with id ${readVideo.course_id} not found`);
+
+				return [];
+			}
+
+			const fillWithZeros = (classNo: number): string => {
+				let result = classNo.toString();
+
+				while (result.length < 2) result = `0${result}`;
+
+				return result;
+			};
+
+			const baseVideoURL = `http://openfing-video.fing.edu.uy/media/${readCourse.code}/${
+				readCourse.code
+			}_${fillWithZeros(Number(readVideo.number))}`;
+
+			const readVideoQualities: Array<{
+				height: number;
+				width: number;
+				formats: Array<{ name: string; url: string }>;
+			}> = [];
+
+			const pushQuality = (quality: { height: number; width: number; formatName: string; url: string }) => {
+				const savedQuality = readVideoQualities.find(q => q.height === quality.height);
+
+				if (savedQuality !== undefined)
+					savedQuality.formats.push({
+						name: quality.formatName,
+						url: quality.url,
+					});
+				else
+					readVideoQualities.push({
+						width: quality.width,
+						height: quality.height,
+						formats: [
+							{
+								name: quality.formatName,
+								url: quality.url,
+							},
+						],
+					});
+			};
+
+			const testVideoUrl = async (format: string) => {
+				const videoRequestURL = `${baseVideoURL}.${format}`;
+				const videoResponse = await axios.head(videoRequestURL).catch(e => e);
+
+				if (!isAxiosError(videoResponse)) {
+					const resolution = await getVideoResolution(videoRequestURL);
+
+					if (resolution !== null) {
+						pushQuality({
+							formatName: format,
+							url: videoRequestURL,
+							height: resolution.height,
+							width: resolution.width,
+						});
+
+						return true;
+					}
+				} else if (videoResponse.response && videoResponse.response.status === 404) return true;
+
+				if (times[i] && times[i] > 2) console.log(videoResponse);
+
+				return false;
+			};
+
+			const result = await Promise.all([testVideoUrl("webm"), testVideoUrl("mp4")]).then(
+				results => !results.some(r => !r)
+			);
+
+			if (result) return readVideoQualities;
+
+			console.log(`unsuccessful ${i}`);
+
+			return false;
+		};
+
+		const courseReadVideos = readVideos.filter(rv => rv.course_id === readCourse.id);
+
+		for (const readVideo of courseReadVideos) {
+			let qualities =
+				(readVideosQualities.find(rvq => rvq.readVideo.id === readVideo.id) || { qualities: undefined })
+					.qualities || (false as false);
+
+			let i = 0;
+			while (!qualities) {
+				!i && console.log(`qualities not found for readVideo id: ${readVideo.id}`);
+				i && console.log(`fetching qualities for readVideo ${readVideo.id}: ${i} times`);
+				qualities = await getReadVideoQualities(readVideo);
+
+				if (qualities)
+					readVideosQualities.push({
+						qualities,
+						readVideo,
+					});
+			}
+
+			const readTitle = readTitles.find(t => t.video_id === readVideo.id);
+			const courseClassTitle = (readTitle && readTitle.text) || `Clase ${readVideo.number}`;
+
+			const createdAt = moment(readVideo.created_at).toDate();
+			const createdById = user.id;
+			const updatedAt = moment(readVideo.updated_at).toDate();
+			const updatedById = user.id;
+
+			const courseClassData: Required<
+				Pick<Models.CourseClass, keyof Omit<typeof Models.CourseClassAttributes, "id">>
+			> = {
+				courseClassListId: courseClassList.id,
+				number: readVideo.number,
+				disabled: readVideo.disabled || null,
+				title: courseClassTitle,
+				createdAt,
+				createdById,
+				updatedAt,
+				updatedById,
+				deletedAt: null,
+				deletedById: undefined,
+			};
+			const courseClass = new Models.CourseClass(courseClassData);
+
+			courseClassesToCreate.add(courseClass);
+
+			const videoData: Required<Pick<Models.Video, keyof Omit<typeof Models.VideoAttributes, "id">>> = {
+				courseClassId: courseClass.id,
+				position: 1,
+				name: "Clase",
+				createdAt,
+				createdById,
+				updatedAt,
+				updatedById,
+				deletedAt: null,
+				deletedById: undefined,
+			};
+			const video = new Models.Video(videoData);
+
+			videosToCreate.add(video);
+
+			for (const readVideoQuality of qualities) {
+				const videoQualityData: Required<
+					Pick<Models.VideoQuality, keyof Omit<typeof Models.VideoQualityAttributes, "id">>
 				> = {
-					courseClassListId: courseClassList.id,
-					number: courseReadVideoQualities.readVideo.number,
-					disabled: courseReadVideoQualities.readVideo.disabled || null,
-					title: courseClassTitle,
+					videoId: video.id,
+					width: readVideoQuality.width,
+					height: readVideoQuality.height,
 					createdAt,
 					createdById,
 					updatedAt,
 					updatedById,
-					deletedAt: undefined,
+					deletedAt: null,
 					deletedById: undefined,
 				};
-				const courseClass = new Models.CourseClass(courseClassData);
+				const videoQuality = new Models.VideoQuality(videoQualityData);
 
-				courseClassesToCreate.add(courseClass);
+				videoQualitiesToCreate.add(videoQuality);
 
-				const videoData: Required<Pick<Models.Video, keyof Omit<typeof Models.VideoAttributes, "id">>> = {
-					courseClassId: courseClass.id,
-					position: 1,
-					name: "Clase",
-					createdAt,
-					createdById,
-					updatedAt,
-					updatedById,
-					deletedAt: undefined,
-					deletedById: undefined,
-				};
-				const video = new Models.Video(videoData);
-
-				videosToCreate.add(video);
-
-				for (const readVideoQuality of courseReadVideoQualities.qualities) {
-					const videoQualityData: Required<
-						Pick<Models.VideoQuality, keyof Omit<typeof Models.VideoQualityAttributes, "id">>
+				for (const readVideoFormat of readVideoQuality.formats) {
+					const videoFormatData: Required<
+						Pick<Models.VideoFormat, keyof Omit<typeof Models.VideoFormatAttributes, "id">>
 					> = {
-						videoId: video.id,
-						width: readVideoQuality.width,
-						height: readVideoQuality.height,
+						videoQualityId: videoQuality.id,
+						name: readVideoFormat.name,
+						url: readVideoFormat.url,
 						createdAt,
 						createdById,
 						updatedAt,
 						updatedById,
-						deletedAt: undefined,
+						deletedAt: null,
 						deletedById: undefined,
 					};
-					const videoQuality = new Models.VideoQuality(videoQualityData);
+					const videoFormat = new Models.VideoFormat(videoFormatData);
 
-					videoQualitiesToCreate.add(videoQuality);
-
-					for (const readVideoFormat of readVideoQuality.formats) {
-						const videoFormatData: Required<
-							Pick<Models.VideoFormat, keyof Omit<typeof Models.VideoFormatAttributes, "id">>
-						> = {
-							videoQualityId: videoQuality.id,
-							name: readVideoFormat.name,
-							url: readVideoFormat.url,
-							createdAt,
-							createdById,
-							updatedAt,
-							updatedById,
-							deletedAt: undefined,
-							deletedById: undefined,
-						};
-						const videoFormat = new Models.VideoFormat(videoFormatData);
-
-						videoFormatsToCreate.add(videoFormat);
-					}
+					videoFormatsToCreate.add(videoFormat);
 				}
-			})
-		);
+			}
+		}
+
+		// await Promise.all(
+		// courseReadVideosQualities.map(async courseReadVideoQualities => {
+		// const readTitle = readTitles.find(t => t.video_id === courseReadVideoQualities.readVideo.id);
+		// const courseClassTitle =
+		// 	(readTitle && readTitle.text) || `Clase ${courseReadVideoQualities.readVideo.number}`;
+		// const createdAt = moment(courseReadVideoQualities.readVideo.created_at).toDate();
+		// const createdById = user.id;
+		// const updatedAt = moment(courseReadVideoQualities.readVideo.updated_at).toDate();
+		// const updatedById = user.id;
+		// const courseClassData: Required<
+		// 	Pick<Models.CourseClass, keyof Omit<typeof Models.CourseClassAttributes, "id">>
+		// > = {
+		// 	courseClassListId: courseClassList.id,
+		// 	number: courseReadVideoQualities.readVideo.number,
+		// 	disabled: courseReadVideoQualities.readVideo.disabled || null,
+		// 	title: courseClassTitle,
+		// 	createdAt,
+		// 	createdById,
+		// 	updatedAt,
+		// 	updatedById,
+		// 	deletedAt: undefined,
+		// 	deletedById: undefined,
+		// };
+		// const courseClass = new Models.CourseClass(courseClassData);
+		// courseClassesToCreate.add(courseClass);
+		// const videoData: Required<Pick<Models.Video, keyof Omit<typeof Models.VideoAttributes, "id">>> = {
+		// 	courseClassId: courseClass.id,
+		// 	position: 1,
+		// 	name: "Clase",
+		// 	createdAt,
+		// 	createdById,
+		// 	updatedAt,
+		// 	updatedById,
+		// 	deletedAt: undefined,
+		// 	deletedById: undefined,
+		// };
+		// const video = new Models.Video(videoData);
+		// videosToCreate.add(video);
+		// for (const readVideoQuality of courseReadVideoQualities.qualities) {
+		// 	const videoQualityData: Required<
+		// 		Pick<Models.VideoQuality, keyof Omit<typeof Models.VideoQualityAttributes, "id">>
+		// 	> = {
+		// 		videoId: video.id,
+		// 		width: readVideoQuality.width,
+		// 		height: readVideoQuality.height,
+		// 		createdAt,
+		// 		createdById,
+		// 		updatedAt,
+		// 		updatedById,
+		// 		deletedAt: undefined,
+		// 		deletedById: undefined,
+		// 	};
+		// 	const videoQuality = new Models.VideoQuality(videoQualityData);
+		// 	videoQualitiesToCreate.add(videoQuality);
+		// 	for (const readVideoFormat of readVideoQuality.formats) {
+		// 		const videoFormatData: Required<
+		// 			Pick<Models.VideoFormat, keyof Omit<typeof Models.VideoFormatAttributes, "id">>
+		// 		> = {
+		// 			videoQualityId: videoQuality.id,
+		// 			name: readVideoFormat.name,
+		// 			url: readVideoFormat.url,
+		// 			createdAt,
+		// 			createdById,
+		// 			updatedAt,
+		// 			updatedById,
+		// 			deletedAt: undefined,
+		// 			deletedById: undefined,
+		// 		};
+		// 		const videoFormat = new Models.VideoFormat(videoFormatData);
+		// 		videoFormatsToCreate.add(videoFormat);
+		// 	}
+		// }
+		// })
+		// );
 	}
 
 	const toCSV = (value: unknown): any => {
-		if ([undefined, null].includes(value)) return "";
+		if ([undefined, null].includes(value as any)) return "";
 		if (["string", "number", "boolean"].includes(typeof value)) return value;
 		if (value instanceof Date) {
 			const date = moment(value);
@@ -513,6 +740,8 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 
 		fs.unlinkSync(filePath);
 	}
+
+	fs.writeFileSync(readVideosQualitiesFilePath, JSON.stringify({ readVideosQualities }));
 
 	console.log("- done");
 	process.exit(0);

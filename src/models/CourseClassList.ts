@@ -5,15 +5,15 @@ import {
 	DataType,
 	ForeignKey,
 	HasMany,
-	Model,
 	PrimaryKey,
 	Table,
 } from "sequelize-typescript";
 import { CourseClass, CourseEdition, User } from "./internal";
 
+import { BaseModel } from "./BaseModel";
 import { Nullable } from "../typings/helperTypes";
 
-export const CourseClassListStatus: { [K in "public" | "hidden" | "disabled"]: K } = {
+export const CourseClassListVisibility: { [K in "public" | "hidden" | "disabled"]: K } = {
 	public: "public",
 	disabled: "disabled",
 	hidden: "hidden",
@@ -26,7 +26,7 @@ export const CourseClassListAttributes: {
 			| "id"
 			| "courseEditionId"
 			| "name"
-			| "status"
+			| "visibility"
 			| "createdAt"
 			| "createdById"
 			| "updatedAt"
@@ -39,7 +39,7 @@ export const CourseClassListAttributes: {
 	id: "id",
 	courseEditionId: "courseEditionId",
 	name: "name",
-	status: "status",
+	visibility: "visibility",
 	createdAt: "createdAt",
 	createdById: "createdById",
 	updatedAt: "updatedAt",
@@ -61,7 +61,11 @@ export const CourseClassListRelations: {
 };
 
 @Table({ modelName: "CourseClassList" })
-export class CourseClassList extends Model<CourseClassList> {
+export class CourseClassList extends BaseModel<CourseClassList> {
+	public static getAttributeName(attribute: keyof typeof CourseClassListAttributes): string {
+		return super.getAttributeName(attribute, this);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.SMALLINT)
@@ -81,7 +85,7 @@ export class CourseClassList extends Model<CourseClassList> {
 	public name: string;
 
 	@Column({ type: DataType.STRING })
-	public status: keyof typeof CourseClassListStatus;
+	public visibility: keyof typeof CourseClassListVisibility;
 
 	@Column(DataType.DATE)
 	public createdAt?: Nullable<Date>;
@@ -104,7 +108,7 @@ export class CourseClassList extends Model<CourseClassList> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date | string>;
+	public deletedAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)

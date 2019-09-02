@@ -47,14 +47,14 @@ export class FAQ extends Model<FAQ> {
 	@Column(DataType.INTEGER)
 	public id: number;
 
-	@Column(DataType.STRING)
-	public title?: Nullable<string>;
+	@Column({ type: DataType.STRING, allowNull: false })
+	public title: string;
 
-	@Column(DataType.TEXT)
-	public content?: Nullable<string>;
+	@Column({ type: DataType.TEXT, allowNull: false })
+	public content: string;
 
-	@Column(DataType.BOOLEAN)
-	public isHTML?: Nullable<boolean>;
+	@Column({ type: DataType.BOOLEAN, allowNull: false })
+	public isHTML: boolean;
 
 	@Column(DataType.DATE)
 	public createdAt?: Nullable<Date>;
@@ -77,7 +77,7 @@ export class FAQ extends Model<FAQ> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date | string>;
+	public deletedAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)

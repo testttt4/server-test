@@ -1,6 +1,6 @@
 import * as Errors from "../errors";
+import * as Models from "../models";
 
-import { Nullable } from "../typings/helperTypes";
 import { validateString } from "./Base";
 
 export const validateTitle = (title: string): [true, string] | [false, Errors.BadUserInput[]] => {
@@ -17,68 +17,55 @@ export const validateContent = (content: string): [true, string] | [false, Error
 	return errors.length > 0 ? [false, errors] : [true, content];
 };
 
-export type CreateData = {
-	title: string;
-	content: string;
-	isHTML: boolean;
-};
-export type ValidatedCreateData = CreateData;
-export type InvalidatedCreateData = Partial<Record<keyof CreateData, Errors.BadUserInput | Errors.BadUserInput[]>>;
-export const validateCreateData = (data: CreateData): [true, ValidatedCreateData] | [false, InvalidatedCreateData] => {
-	const validatedData: ValidatedCreateData = {
-		...data,
+export type DataToValidate = Required<
+	Pick<Models.FAQ, keyof Pick<typeof Models.FAQAttributes, "title" | "content" | "isHTML">>
+>;
+export type InvalidatedData<TKeys extends keyof DataToValidate = keyof DataToValidate> = Partial<
+	Record<TKeys, Errors.BadUserInput[]>
+>;
+export type ValidatedData<TKeys extends keyof DataToValidate = keyof DataToValidate> = Pick<DataToValidate, TKeys>;
+export const validateData = async <TKeys extends keyof DataToValidate>(
+	data: Pick<DataToValidate, TKeys>
+): Promise<[true, ValidatedData<TKeys>] | [false, InvalidatedData<TKeys>]> => {
+	const validatedData: ValidatedData<any> = {} as any;
+	const errors: InvalidatedData = {} as any;
+
+	const getDataProperty = <TKey extends keyof DataToValidate>(key: TKey): DataToValidate[TKey] | undefined =>
+		(data as DataToValidate)[key] || undefined;
+
+	const validators: Record<keyof DataToValidate, () => Promise<void> | void> = {
+		title: async () => {
+			const title = getDataProperty("title");
+
+			if (title === undefined) return;
+
+			const titleValidation = await validateTitle(title);
+
+			if (titleValidation[0]) validatedData.title = titleValidation[1];
+			else errors.title = titleValidation[1];
+		},
+		content: async () => {
+			const content = getDataProperty("content");
+
+			if (content === undefined) return;
+
+			const contentValidation = await validateContent(content);
+
+			if (contentValidation[0]) validatedData.content = contentValidation[1];
+			else errors.content = contentValidation[1];
+		},
+		isHTML: async () => {
+			const isHTML = getDataProperty("isHTML");
+
+			if (isHTML === undefined) return;
+
+			validatedData.isHTML = isHTML;
+		},
 	};
-	const errors: InvalidatedCreateData = {};
 
-	const titleValidation = validateTitle(data.title);
-	if (titleValidation[0]) validatedData.title = titleValidation[1];
-	else errors.title = titleValidation[1];
+	for (const key of Object.keys(validators) as Array<keyof DataToValidate>) await validators[key]();
 
-	const contentValidation = validateContent(data.content);
-	if (contentValidation[0]) validatedData.content = contentValidation[1];
-	else errors.content = contentValidation[1];
+	const hasErrors = Object.keys(errors).length > 0;
 
-	return Object.keys(errors).length > 0 ? [false, errors] : [true, validatedData];
-};
-
-export type UpdateData = {
-	title?: Nullable<string>;
-	content?: Nullable<string>;
-	isHTML?: Nullable<boolean>;
-};
-export type ValidatedUpdateData = {
-	title?: string;
-	content?: string;
-	isHTML?: boolean;
-};
-export type InvalidatedUpdateData = Partial<Record<keyof UpdateData, Errors.BadUserInput | Errors.BadUserInput[]>>;
-export const validateUpdateData = (data: UpdateData): [true, ValidatedUpdateData] | [false, InvalidatedUpdateData] => {
-	const errors: InvalidatedUpdateData = {};
-
-	let title: string | undefined;
-	if (data.title) {
-		const titleValidation = validateTitle(data.title);
-		if (titleValidation[0]) title = titleValidation[1];
-		else errors.title = titleValidation[1];
-	}
-
-	let content: string | undefined;
-	if (data.content) {
-		const contentValidation = validateContent(data.content);
-		if (contentValidation[0]) content = contentValidation[1];
-		else errors.content = contentValidation[1];
-	}
-
-	const isHTML = typeof data.isHTML === "boolean" ? data.isHTML : undefined;
-
-	return Object.keys(errors).length > 0
-		? [false, errors]
-		: [
-				true,
-				{
-					title,
-					content,
-					isHTML,
-				},
-		  ];
+	return hasErrors ? [false, errors as any] : [true, validatedData as any];
 };

@@ -51,16 +51,16 @@ export class VideoFormat extends Model<VideoFormat> {
 
 	@ForeignKey(() => VideoQuality)
 	@Column({ type: DataType.INTEGER })
-	public videoQualityId?: Nullable<number>;
+	public videoQualityId?: number;
 
 	@BelongsTo(() => VideoQuality, VideoFormatAttributes.videoQualityId)
 	public videoQuality?: Nullable<VideoQuality>;
 
-	@Column({ type: DataType.STRING })
-	public name?: Nullable<string>;
+	@Column({ type: DataType.STRING, allowNull: false })
+	public name: string;
 
-	@Column({ type: DataType.STRING })
-	public url?: Nullable<string>;
+	@Column({ type: DataType.STRING, allowNull: false })
+	public url: string;
 
 	@Column(DataType.DATE)
 	public createdAt?: Nullable<Date>;
@@ -83,7 +83,7 @@ export class VideoFormat extends Model<VideoFormat> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date | string>;
+	public deletedAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)

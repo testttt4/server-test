@@ -21,7 +21,9 @@ export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Model
 		else config.ignore();
 
 		if (!options.includeDisabled)
-			where[Models.CourseClassListAttributes.status] = { [Op.not]: Models.CourseClassListStatus.disabled };
+			where[Models.CourseClassListAttributes.visibility] = {
+				[Op.not]: Models.CourseClassListVisibility.disabled,
+			};
 
 		return Models.CourseClassList.findAll({
 			where,
@@ -34,7 +36,7 @@ export type FindOne = {
 	includeDisabled?: boolean;
 	includeDeleted?: boolean;
 };
-export const findOne = getDataHandler<(options: FindOne) => Promise<Models.CourseClassList | undefined>>({
+export const findOne = getDataHandler<(options: FindOne) => Promise<Models.CourseClassList | null>>({
 	getCacheKey: options => [options.id, !!options.includeDeleted, !!options.includeDisabled].join("."),
 	calculate: async (config, options) => {
 		const where: WhereOptions = {
@@ -46,9 +48,11 @@ export const findOne = getDataHandler<(options: FindOne) => Promise<Models.Cours
 		else config.ignore();
 
 		if (!options.includeDisabled)
-			where[Models.CourseClassListAttributes.status] = { [Op.not]: Models.CourseClassListStatus.disabled };
+			where[Models.CourseClassListAttributes.visibility] = {
+				[Op.not]: Models.CourseClassListVisibility.disabled,
+			};
 
-		return (await Models.CourseClassList.findOne({ where })) || undefined;
+		return Models.CourseClassList.findOne({ where });
 	},
 });
 

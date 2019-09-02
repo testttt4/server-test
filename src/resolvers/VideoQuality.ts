@@ -2,54 +2,37 @@ import * as Data from "../data";
 import * as Models from "../models";
 import * as Schemas from "../schemas";
 
-import { Ctx, FieldResolver, Info, Resolver, Root } from "type-graphql";
-
-import { Context } from "../Context";
-import { GraphQLResolveInfo } from "graphql";
+import { FieldResolver, Resolver, Root } from "type-graphql";
 
 @Resolver(() => Schemas.VideoQuality)
 export class VideoQuality {
 	// region FieldResolvers
 	@FieldResolver(() => [Schemas.VideoFormat])
-	public async formats(@Root() videoQuality: { id?: number }): Promise<Models.VideoFormat[]> {
-		if (videoQuality.id === undefined) return [];
-
+	public async formats(@Root() videoQuality: Models.VideoQuality): Promise<Models.VideoFormat[]> {
 		return Data.VideoFormat.findAllByVideoQuality({
 			videoQualityId: videoQuality.id,
 		});
 	}
 
 	@FieldResolver(() => Schemas.User, { nullable: true })
-	public async createdBy(
-		@Root() videoQuality: { createdBy?: number },
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.User | null> {
-		if (videoQuality.createdBy === undefined) return null;
+	public async createdBy(@Root() videoQuality: Models.VideoQuality): Promise<Models.User | null> {
+		if (typeof videoQuality.createdById !== "number") return null;
 
-		return (await Data.User.findOne({ id: videoQuality.createdBy })) || null;
+		return Data.User.findOne({ id: videoQuality.createdById });
 	}
 
 	@FieldResolver(() => Schemas.User, { nullable: true })
-	public async updatedBy(
-		@Root() videoQuality: { updatedBy?: number },
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.User | null> {
-		if (videoQuality.updatedBy === undefined) return null;
+	public async updatedBy(@Root() videoQuality: Models.VideoQuality): Promise<Models.User | null> {
+		if (typeof videoQuality.updatedById !== "number") return null;
 
-		return (await Data.User.findOne({ id: videoQuality.updatedBy })) || null;
+		return Data.User.findOne({ id: videoQuality.updatedById });
 	}
 
 	@FieldResolver(() => Schemas.User, { nullable: true })
-	public async deletedBy(
-		@Root() videoQuality: { deletedBy?: number },
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.User | null> {
-		if (videoQuality.deletedBy === undefined) return null;
+	public async deletedBy(@Root() videoQuality: Models.VideoQuality): Promise<Models.User | null> {
+		if (typeof videoQuality.deletedById !== "number") return null;
 
-		return (await Data.User.findOne({ id: videoQuality.deletedBy })) || null;
+		return Data.User.findOne({ id: videoQuality.deletedById });
 	}
 	// endregion
 }

@@ -5,7 +5,7 @@ import { Int, Query } from "type-graphql";
 export class Utils {
 	@Query(() => Int, { nullable: true })
 	public reloadCache(): null {
-		Data.Base.reloadCache();
+		Data.Base.Cache.removeCache();
 
 		return null;
 	}

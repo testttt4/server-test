@@ -4,8 +4,6 @@ import * as Errors from "../errors";
 import axios from "axios";
 import { validateString } from "./Base";
 
-// TODO: delete axios
-
 export const validateEmail = (email: string): [true, string] | [false, Errors.BadUserInput[]] => {
 	email = email.trim().toLowerCase();
 	const errors = validateString({ value: email, max: 255, notEmpty: true });
@@ -13,10 +11,15 @@ export const validateEmail = (email: string): [true, string] | [false, Errors.Ba
 	return errors.length > 0 ? [false, errors] : [true, email];
 };
 
+export type SignInData = {
+	email: string;
+	password: string;
+};
 export const signIn = async (
-	email: string,
-	password: string
+	data: SignInData
 ): Promise<{ token: string; user: { uid: string; cn: string } } | null> => {
+	const { email, password } = data;
+
 	const requestData = {
 		username: email.split("@")[0],
 		password,
@@ -39,7 +42,7 @@ export const signIn = async (
 		if (status === 200 && responseData) {
 			const { token, user } = responseData;
 
-			if (typeof token === "string" && user && typeof user.uid === "string" && user.cn)
+			if (typeof token === "string" && user && typeof user.uid === "string" && typeof user.cn === "string")
 				return {
 					token,
 					user: {
@@ -87,16 +90,18 @@ export const validateSignUpData = async (
 	let name = "";
 	let uid = "";
 
-	const userData = await signIn(data.email, data.password);
-	if (userData) {
-		name = userData.user.cn;
-		uid = userData.user.uid;
+	if (email) {
+		const userData = await signIn({ email, password: data.password });
+
+		if (userData) {
+			name = userData.user.cn;
+			uid = userData.user.uid;
+		}
 	}
 
 	const userWithSameUid = await Data.User.findOne({ uid });
 
-	if (uid.length === 0 || userWithSameUid)
-		throw Errors.BadUserInputError("Ocurrió un error al intentar iniciar sesión.");
+	if (!uid || userWithSameUid) throw Errors.BadUserInputError("Ocurrió un error al intentar iniciar sesión.");
 
 	return Object.keys(errors).length > 0
 		? [false, errors]

@@ -2,46 +2,30 @@ import * as Data from "../data";
 import * as Models from "../models";
 import * as Schemas from "../schemas";
 
-import { Ctx, FieldResolver, Info, Resolver, Root } from "type-graphql";
-
-import { Context } from "../Context";
-import { GraphQLResolveInfo } from "graphql";
+import { FieldResolver, Resolver, Root } from "type-graphql";
 
 @Resolver(() => Schemas.VideoFormat)
 export class VideoFormat {
 	// region FieldResolvers
 	@FieldResolver(() => Schemas.User, { nullable: true })
-	public async createdBy(
-		@Root() videoFormat: any,
+	public async createdBy(@Root() videoFormat: Models.VideoFormat): Promise<Models.User | null> {
+		if (typeof videoFormat.createdById !== "number") return null;
 
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.User | null> {
-		if (videoFormat.createdBy === undefined) return null;
-
-		return (await Data.User.findOne({ id: videoFormat.createdBy })) || null;
+		return Data.User.findOne({ id: videoFormat.createdById });
 	}
 
 	@FieldResolver(() => Schemas.User, { nullable: true })
-	public async updatedBy(
-		@Root() videoFormat: { updatedBy?: number },
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.User | null> {
-		if (videoFormat.updatedBy === undefined) return null;
+	public async updatedBy(@Root() videoFormat: Models.VideoFormat): Promise<Models.User | null> {
+		if (typeof videoFormat.updatedById !== "number") return null;
 
-		return (await Data.User.findOne({ id: videoFormat.updatedBy })) || null;
+		return Data.User.findOne({ id: videoFormat.updatedById });
 	}
 
 	@FieldResolver(() => Schemas.User, { nullable: true })
-	public async deletedBy(
-		@Root() videoFormat: { deletedBy?: number },
-		@Info() info: GraphQLResolveInfo,
-		@Ctx() context: Context
-	): Promise<Models.User | null> {
-		if (videoFormat.deletedBy === undefined) return null;
+	public async deletedBy(@Root() videoFormat: Models.VideoFormat): Promise<Models.User | null> {
+		if (typeof videoFormat.deletedById !== "number") return null;
 
-		return (await Data.User.findOne({ id: videoFormat.deletedBy })) || null;
+		return Data.User.findOne({ id: videoFormat.deletedById });
 	}
 	// endregion
 }

@@ -6,3 +6,5 @@ scratches
 .env.*
 .history
 src/logs
+_files
+.vscode

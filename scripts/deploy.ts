@@ -120,7 +120,14 @@ const deploy = async () => {
 
 	try {
 		console.log(
-			await ssh.exec([`cd ${DESTINATION_PATH}`, "npm ci", `pm2 start ${pm2ConfigFilename}`].join(" && "))
+			await ssh.exec(
+				[
+					`cd ${DESTINATION_PATH}`,
+					"npm ci",
+					`node ${path.join(DESTINATION_PATH, "scripts", "populateDB.js")}`,
+					`pm2 start ${pm2ConfigFilename}`,
+				].join(" && ")
+			)
 		);
 	} catch (e) {
 		console.log(e.toString("utf8"));

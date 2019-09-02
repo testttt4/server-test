@@ -8,10 +8,9 @@ import { Context } from "../Context";
 import { getTokenPayload } from "../utils/Helper";
 import { logger } from "../utils/logger";
 
-export const authenticatedMiddleware: (roles?: Models.UserRoleName[]) => MiddlewareFn<Context> = roles => async (
-	{ context },
-	next
-) => {
+export const authenticatedMiddleware: (
+	roles?: Array<keyof typeof Models.UserRoleName>
+) => MiddlewareFn<Context> = roles => async ({ context }, next) => {
 	const token = context.req.headers["x-token"];
 
 	const payload = getTokenPayload(typeof token === "string" ? token : "");
@@ -38,4 +37,5 @@ export const authenticatedMiddleware: (roles?: Models.UserRoleName[]) => Middlew
 	throw new Errors.PermissionsError();
 };
 
-export const Authenticated = (roles?: Models.UserRoleName[]) => UseMiddleware(authenticatedMiddleware(roles));
+export const Authenticated = (roles?: Array<keyof typeof Models.UserRoleName>) =>
+	UseMiddleware(authenticatedMiddleware(roles));

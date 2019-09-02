@@ -2,6 +2,8 @@ import * as fs from "fs";
 import * as jwt from "jsonwebtoken";
 
 import { FileUpload } from "graphql-upload";
+import ffprobe from "ffprobe";
+import { path as ffprobePath } from "ffprobe-static";
 import path from "path";
 import { serverConfig } from "../serverConfig";
 import urlJoin from "url-join";
@@ -11,7 +13,7 @@ export const identity = <T>(value: T): T => value;
 
 export const getUUID = () => uuidV4();
 
-export const pick = <T extends any>(obj: T, keys: Array<keyof T>): Partial<T> =>
+export const pick = <T extends any, TKeys extends keyof T>(obj: T, keys: TKeys[]): Pick<T, TKeys> =>
 	keys.reduce(
 		(result, key) => {
 			result[key] = obj[key];
@@ -63,3 +65,18 @@ export const getTokenPayload = (token: string): { me: { id: number } } | null =>
 
 	return null;
 };
+
+export const getVideoResolution = (url: string): Promise<{ width: number; height: number } | null> =>
+	ffprobe(url, {
+		path: ffprobePath,
+	})
+		.then(streams => {
+			const streamWithResolution = streams.streams.find(s => s.width && s.height);
+
+			if (!streamWithResolution) throw new Error(`Resolution not found for ${url}`);
+
+			const { height, width } = streamWithResolution;
+
+			return { height, width };
+		})
+		.catch(() => null);

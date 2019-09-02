@@ -1,5 +1,6 @@
-import { AutoIncrement, BelongsTo, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { AutoIncrement, BelongsTo, Column, DataType, ForeignKey, PrimaryKey, Table } from "sequelize-typescript";
 
+import { BaseModel } from "./BaseModel";
 import { Nullable } from "../typings/helperTypes";
 import { User } from "./internal";
 
@@ -51,7 +52,11 @@ export const CourseRelations: {
 };
 
 @Table({ modelName: "Course" })
-export class Course extends Model<Course> {
+export class Course extends BaseModel<Course> {
+	public static getAttributeName(attribute: keyof typeof CourseAttributes): string {
+		return super.getAttributeName(attribute, this);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.SMALLINT)
@@ -93,7 +98,7 @@ export class Course extends Model<Course> {
 	public updatedBy: Nullable<User>;
 
 	@Column(DataType.DATE)
-	public deletedAt?: Nullable<Date | string>;
+	public deletedAt?: Nullable<Date>;
 
 	@ForeignKey(() => User)
 	@Column(DataType.INTEGER)

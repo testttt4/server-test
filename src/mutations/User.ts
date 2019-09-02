@@ -14,7 +14,7 @@ export type SignUpFromValidatedDataOptions = {
 export const signUpFromValidatedData = async ({
 	data,
 }: SignUpFromValidatedDataOptions): Promise<{ user: Models.User; token: string }> => {
-	const userRole = await UserRole.findOneOrCreate({ name: Models.UserRoleName.User });
+	const userRole = await UserRole.findOneOrCreate({ name: Models.UserRoleName.user });
 
 	if (!userRole[0]) throw new Error(); // TODO
 
@@ -27,7 +27,7 @@ export const signUpFromValidatedData = async ({
 		userId: user.id,
 	});
 
-	Data.Base.reloadCache();
+	Data.Base.Cache.removeCache();
 
 	const token = jwt.sign({ id: user.id }, serverConfig.JWT_SECRET, { expiresIn: serverConfig.JWT_DURATION });
 
@@ -56,7 +56,7 @@ export type SignInOptions = {
 export const signIn = async (options: SignInOptions): Promise<{ user: Models.User; token: string }> => {
 	const { email, password } = options;
 
-	const signInData = await Validators.User.signIn(email, password);
+	const signInData = await Validators.User.signIn({ email, password });
 	const user = signInData ? await Data.User.findOne({ uid: signInData.user.uid }) : undefined;
 
 	if (!signInData || !user) throw Errors.BadUserInputError("Los datos ingresados no son correctos");
@@ -77,7 +77,7 @@ export const signIn = async (options: SignInOptions): Promise<{ user: Models.Use
 };
 
 const _deleteUser = async ({ user }: { user: Models.User }) => {
-	user.deletedAt = moment().toISOString();
+	user.deletedAt = moment().toDate();
 
 	await Models.UserUserRole.update(
 		{
@@ -102,5 +102,5 @@ export const deleteUser = async ({ id }: DeleteUserOptions) => {
 
 	await _deleteUser({ user });
 
-	Data.Base.reloadCache();
+	Data.Base.Cache.removeCache();
 };

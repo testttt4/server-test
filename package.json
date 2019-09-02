@@ -3,6 +3,7 @@
 	"description": "OpenFING Server",
 	"scripts": {
 		"start": "ts-node --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/start.ts",
+		"dev": "nodemon",
 		"scratch": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/scratch.ts",
 		"getReadVideosQualities": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/getReadVideosQualities.ts",
 		"build": "ts-node --project  tsconfig.json --compiler-options '{\"module\": \"commonjs\"}' --transpile-only scripts/build.ts",
@@ -61,7 +62,7 @@
 		"inline-environment-variables-webpack-plugin": "1.2.1",
 		"lint-staged": "9.2.1",
 		"node": "12.7.0",
-		"nodemon": "1.19.1",
+		"nodemon": "^1.19.1",
 		"prettier": "1.18.2",
 		"terser-webpack-plugin": "1.4.1",
 		"ts-loader": "6.0.4",

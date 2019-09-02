@@ -45,6 +45,7 @@ const schema = buildSchemaSync({
 		Resolvers.Course,
 		Resolvers.CourseClass,
 		Resolvers.CourseClassList,
+		Resolvers.CourseEdition,
 		Resolvers.FAQ,
 		Resolvers.User,
 		Resolvers.Utils,

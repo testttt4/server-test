@@ -28,5 +28,5 @@
 		"target": "es6",
 		"suppressImplicitAnyIndexErrors": false
 	},
-	"files": ["src/typings/index.d.ts", "src/index.ts"]
+	"files": ["src/typings/index.d.ts", "src/index.ts", "src/scripts/populateDB/populateDB.ts"]
 }
