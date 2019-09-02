@@ -130,6 +130,7 @@ const deploy = async () => {
 			)
 		);
 	} catch (e) {
+		console.log("error");
 		console.log(e.toString("utf8"));
 	}
 
