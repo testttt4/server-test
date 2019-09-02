@@ -118,11 +118,23 @@ const deploy = async () => {
 		sftp,
 	});
 
+	for (const command of [
+		[`cd ${DESTINATION_PATH}`, "npm ci"].join(" && "),
+		`node ${path.join(DESTINATION_PATH, "scripts", "populateDB.js")}`,
+		`pm2 start ${pm2ConfigFilename}`,
+	].join(" && ")) {
+		try {
+			console.log(await ssh.exec(command));
+		} catch (e) {
+			if (!(e instanceof Buffer)) throw e;
+			console.log(e.toString("utf8"));
+		}
+	}
+
 	try {
 		console.log(
 			await ssh.exec(
 				[
-					`cd ${DESTINATION_PATH}`,
 					"npm ci",
 					`node ${path.join(DESTINATION_PATH, "scripts", "populateDB.js")}`,
 					`pm2 start ${pm2ConfigFilename}`,
