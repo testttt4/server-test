@@ -125,8 +125,8 @@ export class Course {
 	//#endregion
 
 	//#region FieldResolvers
-	@FieldResolver(() => [Schemas.CourseClassList])
-	public async classLists(@Root() course: Models.Course): Promise<Models.CourseEdition[]> {
+	@FieldResolver(() => [Schemas.CourseEdition])
+	public async editions(@Root() course: Models.Course): Promise<Models.CourseEdition[]> {
 		if (!course.id) return [];
 
 		return Data.CourseEdition.findAll({
