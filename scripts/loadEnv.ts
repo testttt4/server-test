@@ -24,7 +24,7 @@ export const loadEnv = () => {
 	};
 
 	if (CI === "true") {
-		const isPreview = TRAVIS_TAG && /^v\d+\.\d+\.\d+-preview\d+$/.test(TRAVIS_TAG);
+		const isPreview = true; // TRAVIS_TAG && /^v\d+\.\d+\.\d+-preview\d+$/.test(TRAVIS_TAG);
 		const isProduction = TRAVIS_TAG && /^v\d+\.\d+\.\d+$/.test(TRAVIS_TAG);
 
 		if (!isPreview && !isProduction) return console.log("Won't be deploying.");
