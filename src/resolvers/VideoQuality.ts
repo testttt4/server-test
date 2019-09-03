@@ -5,6 +5,15 @@ import * as Schemas from "../schemas";
 @Resolver(() => Schemas.VideoQuality)
 export class VideoQuality {
 	// region FieldResolvers
+	@FieldResolver(() => Schemas.Video, { nullable: true })
+	public async video(@Root() videoQuality: Schemas.VideoQuality): Promise<Schemas.Video | null> {
+		if (typeof videoQuality.videoId !== "number") return null;
+
+		return Data.Video.findOne({
+			id: videoQuality.videoId,
+		});
+	}
+
 	@FieldResolver(() => [Schemas.VideoFormat])
 	public async formats(@Root() videoQuality: Schemas.VideoQuality): Promise<Schemas.VideoFormat[]> {
 		return Data.VideoFormat.findAllByVideoQuality({
