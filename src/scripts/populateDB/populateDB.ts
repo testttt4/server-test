@@ -561,86 +561,12 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 				}
 			}
 		}
-
-		// await Promise.all(
-		// courseReadVideosQualities.map(async courseReadVideoQualities => {
-		// const readTitle = readTitles.find(t => t.video_id === courseReadVideoQualities.readVideo.id);
-		// const courseClassTitle =
-		// 	(readTitle && readTitle.text) || `Clase ${courseReadVideoQualities.readVideo.number}`;
-		// const createdAt = moment(courseReadVideoQualities.readVideo.created_at).toDate();
-		// const createdById = user.id;
-		// const updatedAt = moment(courseReadVideoQualities.readVideo.updated_at).toDate();
-		// const updatedById = user.id;
-		// const courseClassData: Required<
-		// 	Pick<Models.CourseClass, keyof Omit<typeof Models.CourseClassAttributes, "id">>
-		// > = {
-		// 	courseClassListId: courseClassList.id,
-		// 	number: courseReadVideoQualities.readVideo.number,
-		// 	disabled: courseReadVideoQualities.readVideo.disabled || null,
-		// 	title: courseClassTitle,
-		// 	createdAt,
-		// 	createdById,
-		// 	updatedAt,
-		// 	updatedById,
-		// 	deletedAt: undefined,
-		// 	deletedById: undefined,
-		// };
-		// const courseClass = new Models.CourseClass(courseClassData);
-		// courseClassesToCreate.add(courseClass);
-		// const videoData: Required<Pick<Models.Video, keyof Omit<typeof Models.VideoAttributes, "id">>> = {
-		// 	courseClassId: courseClass.id,
-		// 	position: 1,
-		// 	name: "Clase",
-		// 	createdAt,
-		// 	createdById,
-		// 	updatedAt,
-		// 	updatedById,
-		// 	deletedAt: undefined,
-		// 	deletedById: undefined,
-		// };
-		// const video = new Models.Video(videoData);
-		// videosToCreate.add(video);
-		// for (const readVideoQuality of courseReadVideoQualities.qualities) {
-		// 	const videoQualityData: Required<
-		// 		Pick<Models.VideoQuality, keyof Omit<typeof Models.VideoQualityAttributes, "id">>
-		// 	> = {
-		// 		videoId: video.id,
-		// 		width: readVideoQuality.width,
-		// 		height: readVideoQuality.height,
-		// 		createdAt,
-		// 		createdById,
-		// 		updatedAt,
-		// 		updatedById,
-		// 		deletedAt: undefined,
-		// 		deletedById: undefined,
-		// 	};
-		// 	const videoQuality = new Models.VideoQuality(videoQualityData);
-		// 	videoQualitiesToCreate.add(videoQuality);
-		// 	for (const readVideoFormat of readVideoQuality.formats) {
-		// 		const videoFormatData: Required<
-		// 			Pick<Models.VideoFormat, keyof Omit<typeof Models.VideoFormatAttributes, "id">>
-		// 		> = {
-		// 			videoQualityId: videoQuality.id,
-		// 			name: readVideoFormat.name,
-		// 			url: readVideoFormat.url,
-		// 			createdAt,
-		// 			createdById,
-		// 			updatedAt,
-		// 			updatedById,
-		// 			deletedAt: undefined,
-		// 			deletedById: undefined,
-		// 		};
-		// 		const videoFormat = new Models.VideoFormat(videoFormatData);
-		// 		videoFormatsToCreate.add(videoFormat);
-		// 	}
-		// }
-		// })
-		// );
 	}
 
 	const toCSV = (value: unknown): any => {
-		if ([undefined, null].includes(value as any)) return "";
-		if (["string", "number", "boolean"].includes(typeof value)) return value;
+		if ([undefined, null].some(i => i === value)) return "";
+		if (typeof value === "boolean") return value ? "t" : "f";
+		if (["string", "number"].includes(typeof value)) return value;
 		if (value instanceof Date) {
 			const date = moment(value);
 
@@ -678,8 +604,10 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 		getToCreateItem(videosToCreate, Models.Video, Object.keys(Models.VideoAttributes)),
 		getToCreateItem(videoQualitiesToCreate, Models.VideoQuality, Object.keys(Models.VideoQualityAttributes)),
 		getToCreateItem(videoFormatsToCreate, Models.VideoFormat, Object.keys(Models.VideoFormatAttributes)),
+		getToCreateItem(faqsToCreate, Models.FAQ, Object.keys(Models.FAQAttributes)),
 	]) {
 		i++;
+		const log = toCreate.model === Models.FAQ;
 		const { entities } = toCreate.entityToCreate;
 		if (entities.length === 0) return;
 
