@@ -21,7 +21,7 @@ export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Model
 
 		if (!options.includeDisabled) where[Models.CourseClassAttributes.disabled] = { [Op.or]: [null, false] };
 
-		const res = await Models.CourseClass.findAll({ where, order: Models.CourseClassAttributes.number });
+		const res = await Models.CourseClass.findAll({ where, order: [[Models.CourseClassAttributes.number, "ASC"]] });
 
 		return res && res.map(cc => cc.toTableRow());
 	},
