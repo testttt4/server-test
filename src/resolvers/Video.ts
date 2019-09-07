@@ -14,6 +14,15 @@ export class Video {
 		});
 	}
 
+	@FieldResolver(() => Schemas.CourseClass, { nullable: true })
+	public async courseClass(@Root() video: Schemas.Video): Promise<Schemas.CourseClass | null> {
+		if (typeof video.courseClassId !== "number") return null;
+
+		return Data.CourseClass.findOne({
+			id: video.courseClassId,
+		});
+	}
+
 	@FieldResolver(() => Schemas.User, { nullable: true })
 	public async createdBy(@Root() video: Schemas.Video): Promise<Schemas.User | null> {
 		if (typeof video.createdById !== "number") return null;
