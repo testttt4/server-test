@@ -274,7 +274,11 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 	const coursesByCode = new Map<string, Models.Course>();
 	const courseEditionsByCode = new Map<string, Models.CourseEdition[]>();
 
-	readCourses.find(c => c.code === "vyo15")!.year = 2015;
+	readCourses.forEach(c => {
+		if (c.code === "vyo15") c.year = 2015;
+		else if (c.code === "economia") c.code = "eco";
+		else if (c.code === "et1p") c.code = "et1";
+	});
 
 	for (const readCourse of readCourses) {
 		const cleanCourseCode = getCleanReadCourseCode(readCourse);
