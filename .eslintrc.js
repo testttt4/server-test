@@ -15,6 +15,7 @@ module.exports = {
 	},
 	rules: {
 		"prettier/prettier": "off",
+		"curly": ["warn", "multi"],
 		"sort-imports": "warn",
 
 		"@typescript-eslint/array-type": ["warn", "array-simple"],
