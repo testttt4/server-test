@@ -278,6 +278,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 		if (c.code === "vyo15") c.year = 2015;
 		else if (c.code === "economia") c.code = "eco";
 		else if (c.code === "et1p") c.code = "et1";
+		else if (c.code === "prog3") c.code = "p3";
 	});
 
 	for (const readCourse of readCourses) {

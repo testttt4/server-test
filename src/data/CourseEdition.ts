@@ -25,6 +25,7 @@ export const findAll = getDataHandler<(options: FindAllOptions) => Promise<Model
 
 		return Models.CourseEdition.findAll({
 			where,
+			order: [[Models.CourseEditionAttributes.year, "DESC"], [Models.CourseEditionAttributes.semester, "DESC"]],
 		}).then(courseEditions => courseEditions.map(ce => ce.toTableRow()));
 	},
 });
