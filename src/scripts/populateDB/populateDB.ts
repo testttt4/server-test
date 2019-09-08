@@ -254,7 +254,7 @@ const getNewCourseIconUrl = async (readCourse: ReadCourse): Promise<string> => {
 		fs.mkdirSync(serverConfig.COURSE_ICONS_PATH, { recursive: true });
 
 	const getCleanReadCourseName = (readCourse: ReadCourse) =>
-		readCourse.name.replace(/\( *(Práctico|Teórico|Edición).+\)/g, "").trim();
+		readCourse.name.replace(/\( *(Práctico|Teórico|Edición) *\)/g, " ").trim();
 
 	const getCleanReadCourseCode = (readCourse: ReadCourse): string => {
 		const { code, year } = readCourse;
