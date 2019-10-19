@@ -25,12 +25,60 @@ export class CourseClass {
 		@Arg("courseCode", () => String) courseCode: string,
 		@Arg("classNo", () => Int) classNo: number
 	): Promise<Schemas.CourseClass> {
-		const course = await Data.Course.findOneOrThrow({
+		let course = await Data.Course.findOne({
 			code: courseCode,
 		});
 
-		const courseEditions = await Data.CourseEdition.findAll({ courseId: course.id });
-		const courseEdition = courseEditions.length > 0 ? courseEditions[0] : undefined;
+		if (course) {
+			const courseEditions = await Data.CourseEdition.findAll({ courseId: course.id });
+			const courseEdition = courseEditions.length > 0 ? courseEditions[0] : undefined;
+			const courseClassLists = courseEdition
+				? await Data.CourseClassList.findAll({ courseEditionId: courseEdition.id })
+				: undefined;
+
+			if (!courseClassLists || courseClassLists.length === 0)
+				throw new Errors.ObjectNotFoundError("No se encontró la clase.");
+
+			return Data.CourseClass.findOneOrThrow({
+				number: classNo,
+				courseClassListId: courseClassLists[0].id,
+			});
+		}
+
+		const getCleanReadCourseCode = (code: string): [string, number | null] => {
+			let regex = /-?\d{4}$/;
+			let match = code.match(regex);
+
+			if (match) {
+				const year = parseInt(match[0].replace(/\D/g, ""));
+
+				if (!isNaN(year)) return [code.replace(regex, ""), year];
+			}
+
+			regex = /-?\d{2}$/;
+			match = code.match(regex);
+
+			if (match) {
+				const year = parseInt(match[0].replace(/\D/g, ""));
+
+				if (!isNaN(year)) return [code.replace(regex, ""), year + 2000];
+			}
+
+			return [code, null];
+		};
+
+		const [cleanCourseCode, year] = getCleanReadCourseCode(courseCode);
+		course = await Data.Course.findOne({
+			code: cleanCourseCode,
+		});
+
+		if (!course || !year) throw new Errors.ObjectNotFoundError("El curso no existe");
+
+		const courseEditions = await Data.CourseEdition.findAll({
+			courseId: course.id,
+		});
+		const courseEdition =
+			courseEditions.length > 0 ? courseEditions.find(ce => ce.year === year) || courseEditions[0] : undefined;
 		const courseClassLists = courseEdition
 			? await Data.CourseClassList.findAll({ courseEditionId: courseEdition.id })
 			: undefined;
