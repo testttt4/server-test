@@ -88,16 +88,34 @@ export type FindOneOptions = {
 	  });
 export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Models.CourseClassTableRow | null>>({
 	getCacheKey: options =>
-		[!!options.includeDeleted, options.includeDisabled, options.id, options.courseClassListId, options.number].join(
-			"."
-		),
+		[
+			typeof options.includeDeleted === "boolean" && options.includeDeleted,
+			typeof options.includeDisabled === "undefined" && options.includeDeleted,
+			options.id,
+			options.courseClassListId,
+			options.number,
+		].join("."),
 	calculate: async (config, options) => {
 		const where: WhereOptions = {};
+		const courseEditionWhere: WhereOptions = {};
+		const courseWhere: WhereOptions = {};
 
-		if (!options.includeDeleted) where[Models.CourseClassAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
-		else config.ignore();
+		if (typeof options.courseClassListId !== "undefined" && typeof options.number !== "undefined") {
+			where[Models.CourseClassAttributes.courseClassListId] = options.courseClassListId;
+			where[Models.CourseClassAttributes.number] = options.number;
+		} else if (typeof options.id !== "undefined") where[Models.CourseClassAttributes.id] = options.id;
 
-		if (!options.includeDisabled) where[Models.CourseClassAttributes.disabled] = { [Op.or]: [null, false] };
+		if (!options.includeDeleted) {
+			where[Models.CourseClassAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+			courseEditionWhere[Models.CourseEditionAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+			courseWhere[Models.CourseAttributes.deletedAt] = getNotDeletedCondition().deletedAt;
+		} else config.ignore();
+
+		if (!options.includeDisabled) {
+			where[Models.CourseClassAttributes.disabled] = { [Op.or]: [null, false] };
+			courseEditionWhere[Models.CourseEditionAttributes.visibility] = Models.CourseEditionVisibility.public;
+			courseWhere[Models.CourseAttributes.visibility] = Models.CourseVisibility.public;
+		}
 
 		return Models.CourseClass.findOne({
 			where,
@@ -111,19 +129,13 @@ export const findOne = getDataHandler<(options: FindOneOptions) => Promise<Model
 							model: Models.CourseEdition,
 							as: Models.CourseClassListRelations.courseEdition,
 							attributes: [],
-							where: {
-								[Models.CourseEditionAttributes.visibility]: Models.CourseEditionVisibility.public,
-								[Models.CourseEditionAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
-							},
+							where: courseEditionWhere,
 							include: [
 								{
 									model: Models.Course,
 									as: Models.CourseEditionRelations.course,
 									attributes: [],
-									where: {
-										[Models.CourseAttributes.visibility]: Models.CourseVisibility.public,
-										[Models.CourseAttributes.deletedAt]: getNotDeletedCondition().deletedAt,
-									},
+									where: courseWhere,
 								},
 							],
 						},
