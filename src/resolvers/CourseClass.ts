@@ -1,3 +1,4 @@
+import { logger } from "src/utils/logger";
 import { Arg, FieldResolver, Int, Query, Resolver, Root } from "type-graphql";
 import * as Data from "../data";
 import * as Errors from "../errors";
@@ -72,7 +73,10 @@ export class CourseClass {
 			code: cleanCourseCode,
 		});
 
-		if (!course || !year) throw new Errors.ObjectNotFoundError("El curso no existe");
+		if (!course || !year) {
+			logger.info(`course not found ${courseCode} (${cleanCourseCode})`);
+			throw new Errors.ObjectNotFoundError("El curso no existe");
+		}
 
 		const courseEditions = await Data.CourseEdition.findAll({
 			courseId: course.id,
@@ -83,8 +87,10 @@ export class CourseClass {
 			? await Data.CourseClassList.findAll({ courseEditionId: courseEdition.id })
 			: undefined;
 
-		if (!courseClassLists || courseClassLists.length === 0)
+		if (!courseClassLists || courseClassLists.length === 0) {
+			logger.info(`courseClassLists not found ${courseEdition && courseEdition.id}`);
 			throw new Errors.ObjectNotFoundError("No se encontró la clase.");
+		}
 
 		return Data.CourseClass.findOneOrThrow({
 			number: classNo,
