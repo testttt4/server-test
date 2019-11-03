@@ -71,6 +71,7 @@ export class CourseClass {
 		const [cleanCourseCode, year] = getCleanReadCourseCode(courseCode);
 		course = await Data.Course.findOne({
 			code: cleanCourseCode,
+			includeDisabled: true,
 		});
 
 		if (!course || !year) {
@@ -80,11 +81,12 @@ export class CourseClass {
 
 		const courseEditions = await Data.CourseEdition.findAll({
 			courseId: course.id,
+			includeDisabled: true,
 		});
 		const courseEdition =
 			courseEditions.length > 0 ? courseEditions.find(ce => ce.year === year) || courseEditions[0] : undefined;
 		const courseClassLists = courseEdition
-			? await Data.CourseClassList.findAll({ courseEditionId: courseEdition.id })
+			? await Data.CourseClassList.findAll({ courseEditionId: courseEdition.id, includeDisabled: true })
 			: undefined;
 
 		if (!courseClassLists || courseClassLists.length === 0) {
