@@ -1,9 +1,9 @@
-import { logger } from "src/utils/logger";
 import { Arg, FieldResolver, Int, Query, Resolver, Root } from "type-graphql";
 import * as Data from "../data";
 import * as Errors from "../errors";
 import { Authenticate } from "../middlewares/Authenticate";
 import * as Schemas from "../schemas";
+import { logger } from "../utils/logger";
 
 @Resolver(() => Schemas.CourseClass)
 export class CourseClass {
