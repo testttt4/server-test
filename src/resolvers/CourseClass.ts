@@ -79,6 +79,7 @@ export class CourseClass {
 			throw new Errors.ObjectNotFoundError("El curso no existe");
 		}
 
+		logger.info(`course: ${course.id})`);
 		const courseEditions = await Data.CourseEdition.findAll({
 			courseId: course.id,
 			includeDisabled: true,
@@ -94,10 +95,15 @@ export class CourseClass {
 			throw new Errors.ObjectNotFoundError("No se encontró la clase.");
 		}
 
-		return Data.CourseClass.findOneOrThrow({
+		logger.info(`courseList: ${courseClassLists[0].id})`);
+
+		const result = await Data.CourseClass.findOneOrThrow({
 			number: classNo,
 			courseClassListId: courseClassLists[0].id,
 		});
+		logger.info(`courseClass: ${result.id})`);
+
+		return result;
 	}
 	// endregion
 
