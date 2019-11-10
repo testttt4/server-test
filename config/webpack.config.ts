@@ -80,6 +80,7 @@ export const webpackConfigFactory = (env: "development" | "production" | "none")
 				"populateDB.ts"
 			),
 			[path.join("scripts", "computeUpdates")]: path.resolve(projectPath, "src", "scripts", "computeUpdates"),
+			[path.join("scripts", "mkVideo")]: path.resolve(projectPath, "src", "scripts", "mkVideo"),
 		},
 		output: {
 			path: outputPath,

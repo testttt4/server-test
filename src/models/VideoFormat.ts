@@ -51,6 +51,10 @@ export class VideoFormat extends Model<VideoFormat> {
 		return new VideoFormat(data);
 	}
 
+	public constructor(values: Required<Pick<VideoFormat, keyof Omit<typeof VideoFormatAttributes, "id">>>) {
+		super(values);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.INTEGER)

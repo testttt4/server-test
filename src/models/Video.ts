@@ -62,6 +62,10 @@ export class Video extends Model<Video> {
 		return new Video(data);
 	}
 
+	public constructor(values: Required<Pick<Video, keyof Omit<typeof VideoAttributes, "id">>>) {
+		super(values);
+	}
+
 	@PrimaryKey
 	@AutoIncrement
 	@Column(DataType.INTEGER)
